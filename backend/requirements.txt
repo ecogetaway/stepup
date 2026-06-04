@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+chromadb
+sentence-transformers
+pypdf
+rank-bm25
+numpy
+httpx>=0.27
+fpdf>=1.7
