@@ -109,12 +109,13 @@ def query(request: QueryRequest) -> QueryResponse:
         agent_result = app.state.react_agent.run(request.query)
 
     answer = agent_result["answer"]
+    guardrail_citations = agent_result.get("citations") or citations
     hallucination_flag, coverage_score = app.state.hallucination_checker.check(
         answer,
-        citations,
+        guardrail_citations,
     )
     confidence = app.state.confidence_scorer.score(
-        citations,
+        guardrail_citations,
         hallucination_flag=hallucination_flag,
         coverage_score=coverage_score,
     )
@@ -142,7 +143,7 @@ def query(request: QueryRequest) -> QueryResponse:
 
     response = QueryResponse(
         answer=answer,
-        citations=citations,
+        citations=guardrail_citations,
         confidence=confidence,
         escalated=escalated,
         agent_used=agent_result.get("agent_used", agent_type.value),

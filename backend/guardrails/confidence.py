@@ -11,8 +11,9 @@ class ConfidenceScorer:
     ) -> float:
         if not citations:
             return 0.0
-        rerank_scores = [c.overlap_score for c in citations]
-        rerank_signal = sum(rerank_scores[:3]) / min(len(rerank_scores), 3)
+        rerank_scores = [c.overlap_score or 0.0 for c in citations]
+        divisor = min(len(rerank_scores), 3)
+        rerank_signal = sum(rerank_scores[:3]) / divisor if divisor else 0.0
         count_signal = min(len(citations) / 5.0, 1.0)
         raw = 0.40 * rerank_signal + 0.25 * count_signal + 0.35 * coverage_score
         if hallucination_flag:

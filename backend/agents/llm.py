@@ -85,7 +85,12 @@ def _call_openrouter(prompt: str, system_prompt: str | None = None) -> str:
             )
             response.raise_for_status()
             data = response.json()
-            answer = data["choices"][0]["message"]["content"].strip()
+            message = data["choices"][0].get("message", {})
+            answer = (message.get("content") or "").strip()
+            if not answer:
+                reasoning = message.get("reasoning") or message.get("reasoning_content")
+                if isinstance(reasoning, str):
+                    answer = reasoning.strip()
             if not answer:
                 return _failure("Empty response from OpenRouter.")
             return answer

@@ -10,11 +10,18 @@ def get_embedding_model() -> SentenceTransformer:
 
 
 def embed_query(text: str) -> list[float]:
+    if not text or not text.strip():
+        return []
     model = get_embedding_model()
     vec = model.encode(text, normalize_embeddings=True)
     return vec.tolist()
 
 
 def cosine_sim(a: list[float], b: list[float]) -> float:
+    if not a or not b:
+        return 0.0
     a_arr, b_arr = np.array(a), np.array(b)
-    return float(np.dot(a_arr, b_arr) / (np.linalg.norm(a_arr) * np.linalg.norm(b_arr)))
+    denominator = np.linalg.norm(a_arr) * np.linalg.norm(b_arr)
+    if denominator == 0.0:
+        return 0.0
+    return float(np.dot(a_arr, b_arr) / denominator)
