@@ -62,10 +62,13 @@ class ReActAgent:
         self.retriever = retriever
         self._trace: list[dict] = []
 
-    def run(self, query: str) -> dict:
+    def run(self, query: str, chunks: list[DocumentChunk] | None = None) -> dict:
         self._trace = []
-        self._trace.append({"step": "retrieve", "tool": "hybrid_retriever"})
-        chunks = self.retriever.retrieve(query)
+        if chunks is None:
+            self._trace.append({"step": "retrieve", "tool": "hybrid_retriever"})
+            chunks = self.retriever.retrieve(query)
+        else:
+            self._trace.append({"step": "retrieve", "tool": "hybrid_retriever", "reused": True})
         self._trace.append({"step": "context_built", "chunks_used": len(chunks)})
         context = "\n\n".join(f"[{i + 1}] {c.text}" for i, c in enumerate(chunks))
         answer = self._generate_answer(query, context, chunks)

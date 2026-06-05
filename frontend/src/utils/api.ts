@@ -4,7 +4,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").r
   /\/$/,
   "",
 );
-const QUERY_TIMEOUT_MS = 60_000;
+const QUERY_TIMEOUT_MS = 180_000;
 
 interface HealthResponse {
   status: string;
@@ -51,7 +51,9 @@ export const query = async (request: QueryRequest): Promise<QueryResponse> => {
     return response.json() as Promise<QueryResponse>;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Request timed out after 60 seconds. Please try a narrower query.");
+      throw new Error(
+        `Request timed out after ${QUERY_TIMEOUT_MS / 1000} seconds. The first query can be slow while models warm up — please try again.`,
+      );
     }
 
     throw error;

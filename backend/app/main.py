@@ -55,11 +55,24 @@ def _build_citations(chunks) -> list[Citation]:
     return citations
 
 
+def _warmup_retrieval_models(retriever: HybridRetriever, reranker: Reranker) -> None:
+    warmup_query = "Kafka consumer deployment procedure"
+    try:
+        chunks = retriever.retrieve(warmup_query)
+        if chunks:
+            reranker.rerank(warmup_query, chunks, top_k=1)
+        logger.info("Retrieval and reranker models warmed up")
+    except Exception:
+        logger.exception("Model warmup failed; first query may be slower")
+
+
 def _bootstrap_app_state(app: FastAPI) -> None:
     ensure_demo_data_ready()
     retriever = HybridRetriever()
+    reranker = Reranker()
+    _warmup_retrieval_models(retriever, reranker)
     app.state.retriever = retriever
-    app.state.reranker = Reranker()
+    app.state.reranker = reranker
     app.state.router = QueryRouter()
     app.state.react_agent = ReActAgent(retriever)
     app.state.plan_execute_agent = PlanExecuteAgent(retriever)
@@ -166,7 +179,7 @@ def query(request: QueryRequest) -> QueryResponse:
         if agent_type == AgentType.PLAN_EXECUTE:
             agent_result = app.state.plan_execute_agent.run(request.query)
         else:
-            agent_result = app.state.react_agent.run(request.query)
+            agent_result = app.state.react_agent.run(request.query, chunks=reranked_chunks)
 
         answer = agent_result["answer"]
         guardrail_citations = agent_result.get("citations") or citations
