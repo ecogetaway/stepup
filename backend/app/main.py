@@ -10,6 +10,7 @@ from agents.plan_execute_agent import PlanExecuteAgent
 from agents.react_agent import ReActAgent
 from agents.router import QueryRouter
 from app.config import settings
+from app.startup import _collection_count, ensure_demo_data_ready
 from app.schemas import AgentType, Citation, QueryRequest, QueryResponse
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -59,6 +60,7 @@ async def lifespan(app: FastAPI):
     app.state.startup_error = None
 
     try:
+        ensure_demo_data_ready()
         retriever = HybridRetriever()
         app.state.retriever = retriever
         app.state.reranker = Reranker()
@@ -101,12 +103,15 @@ def health() -> dict[str, str | bool]:
     if llm_provider == "ollama":
         llm_ready = bool(settings.OLLAMA_BASE_URL)
 
+    collection_count = _collection_count()
+
     return {
         "status": "ok",
         "env": settings.APP_ENV,
         "commit": deploy_commit[:12],
         "llm_provider": llm_provider,
         "llm_ready": llm_ready,
+        "collection_count": collection_count if collection_count is not None else -1,
     }
 
 
