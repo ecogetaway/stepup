@@ -1,7 +1,7 @@
 from app.schemas import DocumentChunk, Citation
 from retrieval.hybrid_retriever import HybridRetriever
 import logging
-from agents.react_agent import _normalise_overlap_score
+from retrieval.scoring import chunk_overlap_score
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,10 @@ class PlanExecuteAgent:
                 source_title=c.metadata.get("source", "unknown"),
                 source_url=c.metadata.get("source_url", ""),
                 chunk_text=c.text[:200],
-                overlap_score=_normalise_overlap_score(c.rerank_score),
+                overlap_score=chunk_overlap_score(c, rank),
                 doc_type=c.metadata.get("doc_type", "unknown"),
             )
-            for c in all_chunks
+            for rank, c in enumerate(all_chunks)
         ]
         self._trace.append({"step": "aggregated", "total_chunks": len(all_chunks)})
         return {

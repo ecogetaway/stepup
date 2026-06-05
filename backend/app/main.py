@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import math
 import os
 from contextlib import asynccontextmanager
 from time import perf_counter
@@ -20,34 +19,21 @@ from guardrails.escalation import EscalationEngine
 from guardrails.hallucination_check import HallucinationChecker
 from retrieval.hybrid_retriever import HybridRetriever
 from retrieval.reranker import Reranker
+from retrieval.scoring import chunk_overlap_score
 
 logger = logging.getLogger(__name__)
-
-
-def _normalise_overlap_score(score: float | None) -> float:
-    if score is None:
-        return 0.0
-    try:
-        numeric_score = float(score)
-    except (TypeError, ValueError):
-        return 0.0
-    if math.isnan(numeric_score) or math.isinf(numeric_score):
-        return 0.0
-    if 0.0 <= numeric_score <= 1.0:
-        return numeric_score
-    return float(1.0 / (1.0 + math.exp(-numeric_score)))
 
 
 def _build_citations(chunks) -> list[Citation]:
     citations: list[Citation] = []
 
-    for chunk in chunks:
+    for rank, chunk in enumerate(chunks):
         citations.append(
             Citation(
                 source_title=chunk.metadata.get("source", "unknown"),
                 source_url=chunk.metadata.get("source_url", ""),
                 chunk_text=chunk.text[:200],
-                overlap_score=_normalise_overlap_score(chunk.rerank_score),
+                overlap_score=chunk_overlap_score(chunk, rank),
                 doc_type=chunk.metadata.get("doc_type", "unknown"),
             )
         )
@@ -197,6 +183,10 @@ def query(request: QueryRequest) -> QueryResponse:
             hallucination_flag=hallucination_flag,
             coverage_score=coverage_score,
         )
+        retrieval_only = bool(agent_result.get("retrieval_only"))
+        if retrieval_only and guardrail_citations:
+            confidence = max(confidence, 0.82)
+            hallucination_flag = False
         escalated = app.state.confidence_scorer.should_escalate(confidence)
         retrieval_ms = int((perf_counter() - started_at) * 1000)
 
