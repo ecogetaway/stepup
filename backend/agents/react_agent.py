@@ -14,12 +14,7 @@ def _normalise_overlap_score(score: float | None) -> float:
         return float(score)
     return float(1.0 / (1.0 + math.exp(-score)))
 
-try:
-    import httpx
-
-    HAS_HTTPX = True
-except ModuleNotFoundError:
-    HAS_HTTPX = False
+from agents.llm import LLM_FAILURE_PREFIX, call_llm
 
 
 def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) -> str:
@@ -47,34 +42,6 @@ def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) ->
         ]
     )
     return "\n".join(lines)
-
-
-def _call_ollama(prompt: str, system_prompt: str | None = None) -> str:
-    if not HAS_HTTPX:
-        return "[DEMO FALLBACK] httpx not installed. Install it to enable live LLM calls."
-    payload = {
-        "model": settings.OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": False,
-        "options": {"temperature": 0.2, "num_ctx": 4096},
-    }
-    if system_prompt:
-        payload["system"] = system_prompt
-    try:
-        with httpx.Client(timeout=60.0) as client:
-            resp = client.post(
-                f"{settings.OLLAMA_BASE_URL}/api/generate",
-                json=payload,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("response", "").strip() or "[DEMO FALLBACK] Empty response from Ollama."
-    except Exception as exc:
-        logger.warning("Ollama call failed: %s", exc)
-        return (
-            f"[DEMO FALLBACK] Ollama unreachable at {settings.OLLAMA_BASE_URL}. "
-            f"Start Ollama or check the URL. Error: {exc}"
-        )
 
 
 class ReActAgent:
@@ -115,7 +82,7 @@ class ReActAgent:
             "Do not invent facts, URLs, or ticket IDs."
         )
         prompt = f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer (cite with [N]):"
-        answer = _call_ollama(prompt, system_prompt=system_prompt)
-        if answer.startswith("[DEMO FALLBACK]"):
+        answer = call_llm(prompt, system_prompt=system_prompt)
+        if answer.startswith(LLM_FAILURE_PREFIX):
             return _build_retrieval_fallback_answer(query, chunks)
         return answer

@@ -1,17 +1,12 @@
 from app.schemas import DocumentChunk, Citation
 from retrieval.hybrid_retriever import HybridRetriever
-from app.config import settings
 import logging
 from agents.react_agent import _normalise_overlap_score
 
 logger = logging.getLogger(__name__)
 
-try:
-    from agents.react_agent import _build_retrieval_fallback_answer, _call_ollama
-
-    HAS_OLLAMA_WRAPPER = True
-except ModuleNotFoundError:
-    HAS_OLLAMA_WRAPPER = False
+from agents.llm import LLM_FAILURE_PREFIX, call_llm
+from agents.react_agent import _build_retrieval_fallback_answer
 
 
 class PlanExecuteAgent:
@@ -68,9 +63,7 @@ class PlanExecuteAgent:
             "If the context is insufficient, say so and recommend escalation."
         )
         prompt = f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer (cite with [N]):"
-        if HAS_OLLAMA_WRAPPER:
-            answer = _call_ollama(prompt, system_prompt=system_prompt)
-            if answer.startswith("[DEMO FALLBACK]"):
-                return _build_retrieval_fallback_answer(query, chunks)
-            return answer
-        return _build_retrieval_fallback_answer(query, chunks)
+        answer = call_llm(prompt, system_prompt=system_prompt)
+        if answer.startswith(LLM_FAILURE_PREFIX):
+            return _build_retrieval_fallback_answer(query, chunks)
+        return answer
