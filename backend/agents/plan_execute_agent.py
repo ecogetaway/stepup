@@ -7,7 +7,7 @@ from agents.react_agent import _normalise_overlap_score
 logger = logging.getLogger(__name__)
 
 try:
-    from agents.react_agent import _call_ollama
+    from agents.react_agent import _build_retrieval_fallback_answer, _call_ollama
 
     HAS_OLLAMA_WRAPPER = True
 except ModuleNotFoundError:
@@ -69,8 +69,8 @@ class PlanExecuteAgent:
         )
         prompt = f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer (cite with [N]):"
         if HAS_OLLAMA_WRAPPER:
-            return _call_ollama(prompt, system_prompt=system_prompt)
-        return (
-            f"[DEMO PLAN-EXECUTE ANSWER] Analytical answer to '{query}' synthesized from "
-            f"{len(chunks)} chunks. Replace with LLM call."
-        )
+            answer = _call_ollama(prompt, system_prompt=system_prompt)
+            if answer.startswith("[DEMO FALLBACK]"):
+                return _build_retrieval_fallback_answer(query, chunks)
+            return answer
+        return _build_retrieval_fallback_answer(query, chunks)

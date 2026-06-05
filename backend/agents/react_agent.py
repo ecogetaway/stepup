@@ -22,6 +22,33 @@ except ModuleNotFoundError:
     HAS_HTTPX = False
 
 
+def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) -> str:
+    if not chunks:
+        return (
+            "I could not find relevant information in the knowledge base for this question. "
+            "Please escalate to a human support agent."
+        )
+
+    lines = [
+        f"Based on retrieved enterprise documents, here is what applies to: {query}",
+        "",
+    ]
+    for index, chunk in enumerate(chunks[:3]):
+        source = chunk.metadata.get("source", "unknown")
+        excerpt = chunk.text.strip().replace("\n", " ")
+        if len(excerpt) > 280:
+            excerpt = f"{excerpt[:277]}..."
+        lines.append(f"- [{index + 1}] From {source}: {excerpt}")
+
+    lines.extend(
+        [
+            "",
+            "Answer synthesized from retrieved sources because the hosted LLM is unavailable.",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def _call_ollama(prompt: str, system_prompt: str | None = None) -> str:
     if not HAS_HTTPX:
         return "[DEMO FALLBACK] httpx not installed. Install it to enable live LLM calls."
@@ -88,4 +115,7 @@ class ReActAgent:
             "Do not invent facts, URLs, or ticket IDs."
         )
         prompt = f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer (cite with [N]):"
-        return _call_ollama(prompt, system_prompt=system_prompt)
+        answer = _call_ollama(prompt, system_prompt=system_prompt)
+        if answer.startswith("[DEMO FALLBACK]"):
+            return _build_retrieval_fallback_answer(query, chunks)
+        return answer
