@@ -24,9 +24,15 @@ logger = logging.getLogger(__name__)
 def _normalise_overlap_score(score: float | None) -> float:
     if score is None:
         return 0.0
-    if 0.0 <= score <= 1.0:
-        return float(score)
-    return float(1.0 / (1.0 + math.exp(-score)))
+    try:
+        numeric_score = float(score)
+    except (TypeError, ValueError):
+        return 0.0
+    if math.isnan(numeric_score) or math.isinf(numeric_score):
+        return 0.0
+    if 0.0 <= numeric_score <= 1.0:
+        return numeric_score
+    return float(1.0 / (1.0 + math.exp(-numeric_score)))
 
 
 def _build_citations(chunks) -> list[Citation]:
@@ -99,55 +105,62 @@ def query(request: QueryRequest) -> QueryResponse:
         else app.state.router.route(request.query)
     )
 
-    chunks = app.state.retriever.retrieve(request.query)
-    reranked_chunks = app.state.reranker.rerank(request.query, chunks, top_k=request.top_k)
-    citations = _build_citations(reranked_chunks)
+    try:
+        chunks = app.state.retriever.retrieve(request.query)
+        reranked_chunks = app.state.reranker.rerank(request.query, chunks, top_k=request.top_k)
+        citations = _build_citations(reranked_chunks)
 
-    if agent_type == AgentType.PLAN_EXECUTE:
-        agent_result = app.state.plan_execute_agent.run(request.query)
-    else:
-        agent_result = app.state.react_agent.run(request.query)
+        if agent_type == AgentType.PLAN_EXECUTE:
+            agent_result = app.state.plan_execute_agent.run(request.query)
+        else:
+            agent_result = app.state.react_agent.run(request.query)
 
-    answer = agent_result["answer"]
-    guardrail_citations = agent_result.get("citations") or citations
-    hallucination_flag, coverage_score = app.state.hallucination_checker.check(
-        answer,
-        guardrail_citations,
-    )
-    confidence = app.state.confidence_scorer.score(
-        guardrail_citations,
-        hallucination_flag=hallucination_flag,
-        coverage_score=coverage_score,
-    )
-    escalated = app.state.confidence_scorer.should_escalate(confidence)
-    retrieval_ms = int((perf_counter() - started_at) * 1000)
+        answer = agent_result["answer"]
+        guardrail_citations = agent_result.get("citations") or citations
+        hallucination_flag, coverage_score = app.state.hallucination_checker.check(
+            answer,
+            guardrail_citations,
+        )
+        confidence = app.state.confidence_scorer.score(
+            guardrail_citations,
+            hallucination_flag=hallucination_flag,
+            coverage_score=coverage_score,
+        )
+        escalated = app.state.confidence_scorer.should_escalate(confidence)
+        retrieval_ms = int((perf_counter() - started_at) * 1000)
 
-    trace = {
-        **agent_result.get("trace", {}),
-        "routing": {
-          "forced_agent": forced_agent.value if forced_agent else None,
-          "selected_agent": agent_type.value,
-        },
-        "retrieval": {
-            "initial_chunks": len(chunks),
-            "reranked_chunks": len(reranked_chunks),
-            "top_k": request.top_k,
-        },
-        "guardrails": {
-            "hallucination_flag": hallucination_flag,
-            "coverage_score": coverage_score,
-            "confidence": confidence,
-            "escalated": escalated,
-        },
-    }
+        trace = {
+            **agent_result.get("trace", {}),
+            "routing": {
+                "forced_agent": forced_agent.value if forced_agent else None,
+                "selected_agent": agent_type.value,
+            },
+            "retrieval": {
+                "initial_chunks": len(chunks),
+                "reranked_chunks": len(reranked_chunks),
+                "top_k": request.top_k,
+            },
+            "guardrails": {
+                "hallucination_flag": hallucination_flag,
+                "coverage_score": coverage_score,
+                "confidence": confidence,
+                "escalated": escalated,
+            },
+        }
 
-    response = QueryResponse(
-        answer=answer,
-        citations=guardrail_citations,
-        confidence=confidence,
-        escalated=escalated,
-        agent_used=agent_result.get("agent_used", agent_type.value),
-        trace=trace,
-        retrieval_ms=retrieval_ms,
-    )
-    return app.state.escalation_engine.apply(response)
+        response = QueryResponse(
+            answer=answer,
+            citations=guardrail_citations,
+            confidence=confidence,
+            escalated=escalated,
+            agent_used=agent_result.get("agent_used", agent_type.value),
+            trace=trace,
+            retrieval_ms=retrieval_ms,
+        )
+        return app.state.escalation_engine.apply(response)
+    except ZeroDivisionError as exc:
+        logger.exception("Query pipeline failed with division by zero")
+        raise HTTPException(status_code=500, detail=f"Query pipeline error: {exc}") from exc
+    except Exception as exc:
+        logger.exception("Query pipeline failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

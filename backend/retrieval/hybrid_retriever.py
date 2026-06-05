@@ -64,23 +64,51 @@ class BM25Retriever:
     def index(self, chunks: list[DocumentChunk]) -> None:
         if not HAS_BM25:
             return
-        self._chunk_lookup = {i: c for i, c in enumerate(chunks)}
-        self._corpus_tokens = [c.text.lower().split() for c in chunks]
-        self._model = BM25Okapi(self._corpus_tokens)
-        self._ready = True
+
+        self._chunk_lookup = {}
+        self._corpus_tokens = []
+        self._model = None
+        self._ready = False
+
+        if not chunks:
+            return
+
+        indexed_chunks: list[DocumentChunk] = []
+        for chunk in chunks:
+            tokens = chunk.text.lower().split()
+            if not tokens:
+                continue
+            self._chunk_lookup[len(indexed_chunks)] = chunk
+            self._corpus_tokens.append(tokens)
+            indexed_chunks.append(chunk)
+
+        if not self._corpus_tokens:
+            return
+
+        try:
+            self._model = BM25Okapi(self._corpus_tokens)
+            self._ready = True
+        except Exception:
+            self._model = None
+            self._ready = False
 
     def search(self, query: str, top_k: int) -> list[DocumentChunk]:
         if not self._ready or self._model is None:
             return []
         tokenized = query.lower().split()
-        scores = self._model.get_scores(tokenized)
-        top_indices = scores.argsort()[-top_k:][::-1]
-        out: list[DocumentChunk] = []
-        for idx in top_indices:
-            chunk = self._chunk_lookup[int(idx)]
-            chunk.bm25_score = float(scores[idx])
-            out.append(chunk)
-        return out
+        if not tokenized:
+            return []
+        try:
+            scores = self._model.get_scores(tokenized)
+            top_indices = scores.argsort()[-top_k:][::-1]
+            out: list[DocumentChunk] = []
+            for idx in top_indices:
+                chunk = self._chunk_lookup[int(idx)]
+                chunk.bm25_score = float(scores[idx])
+                out.append(chunk)
+            return out
+        except Exception:
+            return []
 
 
 def _reciprocal_rank_fusion(
@@ -91,7 +119,7 @@ def _reciprocal_rank_fusion(
     for ranked in ranked_lists:
         for rank, chunk in enumerate(ranked):
             key = chunk.chunk_id
-            rrf = 1.0 / (k + rank + 1)
+            rrf = 1.0 / max(k + rank + 1, 1)
             if key in scores:
                 scores[key] = (chunk, scores[key][1] + rrf)
             else:
