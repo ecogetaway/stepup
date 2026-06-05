@@ -1,6 +1,5 @@
 from app.schemas import DocumentChunk, Citation
 from retrieval.hybrid_retriever import HybridRetriever
-from app.config import settings
 import logging
 import math
 
