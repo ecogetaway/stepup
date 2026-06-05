@@ -1,6 +1,6 @@
 const suggestions = [
   "How do I deploy a Kafka consumer?",
-  "Compare P1 vs P2 tickets last week",
+  "What are the Docker security runbook requirements?",
   "What is the VPN setup procedure?",
 ];
 
