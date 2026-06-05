@@ -88,7 +88,7 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, str | bool]:
     deploy_commit = (
         os.getenv("RAILWAY_GIT_COMMIT_SHA")
         or os.getenv("RAILWAY_GIT_COMMIT")
@@ -96,7 +96,18 @@ def health() -> dict[str, str]:
         or os.getenv("GIT_COMMIT")
         or ""
     )
-    return {"status": "ok", "env": settings.APP_ENV, "commit": deploy_commit[:12]}
+    llm_provider = settings.LLM_PROVIDER.strip().lower()
+    llm_ready = llm_provider == "openrouter" and bool(settings.OPENROUTER_API_KEY)
+    if llm_provider == "ollama":
+        llm_ready = bool(settings.OLLAMA_BASE_URL)
+
+    return {
+        "status": "ok",
+        "env": settings.APP_ENV,
+        "commit": deploy_commit[:12],
+        "llm_provider": llm_provider,
+        "llm_ready": llm_ready,
+    }
 
 
 @app.post(f"{settings.API_V1_PREFIX}/query", response_model=QueryResponse)

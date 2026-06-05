@@ -16,6 +16,23 @@ def _normalise_overlap_score(score: float | None) -> float:
 from agents.llm import LLM_FAILURE_PREFIX, call_llm
 
 
+def _summarize_chunk_excerpt(text: str, max_length: int = 220) -> str:
+    cleaned = " ".join(text.strip().split())
+    if not cleaned:
+        return ""
+
+    for separator in (". ", "; ", " - "):
+        if separator in cleaned:
+            first_part = cleaned.split(separator, 1)[0].strip()
+            if len(first_part) >= 40:
+                cleaned = first_part
+                break
+
+    if len(cleaned) > max_length:
+        cleaned = f"{cleaned[: max_length - 3].rstrip()}..."
+    return cleaned
+
+
 def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) -> str:
     if not chunks:
         return (
@@ -23,23 +40,20 @@ def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) ->
             "Please escalate to a human support agent."
         )
 
+    primary_source = chunks[0].metadata.get("source", "enterprise documentation")
     lines = [
-        f"Based on retrieved enterprise documents, here is what applies to: {query}",
+        f"Here is the cited guidance for **{query}** based on indexed enterprise sources:",
         "",
     ]
-    for index, chunk in enumerate(chunks[:3]):
-        source = chunk.metadata.get("source", "unknown")
-        excerpt = chunk.text.strip().replace("\n", " ")
-        if len(excerpt) > 280:
-            excerpt = f"{excerpt[:277]}..."
-        lines.append(f"- [{index + 1}] From {source}: {excerpt}")
 
-    lines.extend(
-        [
-            "",
-            "Answer synthesized from retrieved sources because the hosted LLM is unavailable.",
-        ]
-    )
+    for index, chunk in enumerate(chunks[:3]):
+        excerpt = _summarize_chunk_excerpt(chunk.text)
+        if not excerpt:
+            continue
+        lines.append(f"{index + 1}. {excerpt} [{index + 1}]")
+
+    sources = sorted({chunk.metadata.get("source", "unknown") for chunk in chunks[:3]})
+    lines.extend(["", f"**Sources:** {', '.join(sources)}"])
     return "\n".join(lines)
 
 

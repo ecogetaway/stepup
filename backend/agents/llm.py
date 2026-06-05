@@ -77,7 +77,7 @@ def _call_openrouter(prompt: str, system_prompt: str | None = None) -> str:
     }
 
     try:
-        with httpx.Client(timeout=120.0) as client:
+        with httpx.Client(timeout=180.0) as client:
             response = client.post(
                 f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions",
                 json=payload,
