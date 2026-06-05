@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 import os
@@ -54,28 +55,45 @@ def _build_citations(chunks) -> list[Citation]:
     return citations
 
 
+def _bootstrap_app_state(app: FastAPI) -> None:
+    ensure_demo_data_ready()
+    retriever = HybridRetriever()
+    app.state.retriever = retriever
+    app.state.reranker = Reranker()
+    app.state.router = QueryRouter()
+    app.state.react_agent = ReActAgent(retriever)
+    app.state.plan_execute_agent = PlanExecuteAgent(retriever)
+    app.state.hallucination_checker = HallucinationChecker()
+    app.state.confidence_scorer = ConfidenceScorer()
+    app.state.escalation_engine = EscalationEngine()
+    app.state.ready = True
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.ready = False
     app.state.startup_error = None
+    app.state.bootstrap_running = True
 
-    try:
-        ensure_demo_data_ready()
-        retriever = HybridRetriever()
-        app.state.retriever = retriever
-        app.state.reranker = Reranker()
-        app.state.router = QueryRouter()
-        app.state.react_agent = ReActAgent(retriever)
-        app.state.plan_execute_agent = PlanExecuteAgent(retriever)
-        app.state.hallucination_checker = HallucinationChecker()
-        app.state.confidence_scorer = ConfidenceScorer()
-        app.state.escalation_engine = EscalationEngine()
-        app.state.ready = True
-    except Exception as exc:
-        logger.exception("Backend initialization failed")
-        app.state.startup_error = str(exc)
+    async def bootstrap() -> None:
+        try:
+            await asyncio.to_thread(_bootstrap_app_state, app)
+            logger.info("Backend bootstrap completed")
+        except Exception as exc:
+            logger.exception("Backend initialization failed")
+            app.state.startup_error = str(exc)
+        finally:
+            app.state.bootstrap_running = False
+
+    bootstrap_task = asyncio.create_task(bootstrap())
 
     yield
+
+    bootstrap_task.cancel()
+    try:
+        await bootstrap_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
@@ -109,6 +127,8 @@ def health() -> dict[str, str | bool]:
         "status": "ok",
         "env": settings.APP_ENV,
         "commit": deploy_commit[:12],
+        "ready": bool(getattr(app.state, "ready", False)),
+        "bootstrap_running": bool(getattr(app.state, "bootstrap_running", False)),
         "llm_provider": llm_provider,
         "llm_ready": llm_ready,
         "collection_count": collection_count if collection_count is not None else -1,
@@ -118,7 +138,12 @@ def health() -> dict[str, str | bool]:
 @app.post(f"{settings.API_V1_PREFIX}/query", response_model=QueryResponse)
 def query(request: QueryRequest) -> QueryResponse:
     if not app.state.ready:
-        detail = app.state.startup_error or "Backend is not ready. Run ingestion first."
+        if app.state.startup_error:
+            detail = app.state.startup_error
+        elif getattr(app.state, "bootstrap_running", False):
+            detail = "Backend is still starting up. Please wait 2-3 minutes and try again."
+        else:
+            detail = "Backend is not ready. Run ingestion first."
         raise HTTPException(status_code=503, detail=detail)
 
     started_at = perf_counter()
