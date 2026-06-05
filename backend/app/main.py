@@ -59,9 +59,9 @@ def _warmup_retrieval_models(retriever: HybridRetriever, reranker: Reranker) -> 
     warmup_query = "Kafka consumer deployment procedure"
     try:
         chunks = retriever.retrieve(warmup_query)
-        if chunks:
+        if chunks and settings.USE_CROSS_ENCODER_RERANK:
             reranker.rerank(warmup_query, chunks, top_k=1)
-        logger.info("Retrieval and reranker models warmed up")
+        logger.info("Retrieval models warmed up")
     except Exception:
         logger.exception("Model warmup failed; first query may be slower")
 
@@ -173,7 +173,12 @@ def query(request: QueryRequest) -> QueryResponse:
 
     try:
         chunks = app.state.retriever.retrieve(request.query)
-        reranked_chunks = app.state.reranker.rerank(request.query, chunks, top_k=request.top_k)
+        if settings.USE_CROSS_ENCODER_RERANK:
+            reranked_chunks = app.state.reranker.rerank(
+                request.query, chunks, top_k=request.top_k
+            )
+        else:
+            reranked_chunks = chunks[: request.top_k]
         citations = _build_citations(reranked_chunks)
 
         if agent_type == AgentType.PLAN_EXECUTE:

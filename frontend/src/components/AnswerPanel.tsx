@@ -13,8 +13,7 @@ interface AnswerPanelProps {
 const LoadingSkeleton = () => (
   <div className="space-y-4 rounded-xl bg-white p-5 shadow-sm" aria-label="Loading answer">
     <p className="text-sm text-gray-600">
-      Retrieving documents and generating a cited answer. This can take up to 2 minutes on the
-      first query.
+      Retrieving documents and generating a cited answer. Usually under 30 seconds.
     </p>
     <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
     <div className="space-y-3">

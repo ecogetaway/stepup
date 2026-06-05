@@ -4,7 +4,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").r
   /\/$/,
   "",
 );
-const QUERY_TIMEOUT_MS = 180_000;
+const QUERY_TIMEOUT_MS = 90_000;
 
 interface HealthResponse {
   status: string;

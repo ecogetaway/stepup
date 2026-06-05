@@ -22,10 +22,13 @@ class Settings(BaseSettings):
     RRF_K: int = 60
 
     LLM_PROVIDER: str = "ollama"
+    LLM_TIMEOUT_SECONDS: float = 25.0
+    SKIP_LLM: bool = False
+    USE_CROSS_ENCODER_RERANK: bool = False
     OLLAMA_MODEL: str = "llama3.2:3b"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OPENROUTER_API_KEY: str = ""
-    OPENROUTER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    OPENROUTER_MODEL: str = "google/gemma-2-9b-it:free"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_HTTP_REFERER: str = "https://stepupcopilot.netlify.app"
     OPENAI_API_KEY: str = ""

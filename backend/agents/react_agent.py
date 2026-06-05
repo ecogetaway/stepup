@@ -15,6 +15,9 @@ def _normalise_overlap_score(score: float | None) -> float:
 
 from agents.llm import LLM_FAILURE_PREFIX, call_llm
 
+MAX_CONTEXT_CHUNKS = 3
+MAX_CHUNK_CHARS = 700
+
 
 def _summarize_chunk_excerpt(text: str, max_length: int = 220) -> str:
     cleaned = " ".join(text.strip().split())
@@ -70,7 +73,11 @@ class ReActAgent:
         else:
             self._trace.append({"step": "retrieve", "tool": "hybrid_retriever", "reused": True})
         self._trace.append({"step": "context_built", "chunks_used": len(chunks)})
-        context = "\n\n".join(f"[{i + 1}] {c.text}" for i, c in enumerate(chunks))
+        context_chunks = chunks[:MAX_CONTEXT_CHUNKS]
+        context = "\n\n".join(
+            f"[{i + 1}] {c.text[:MAX_CHUNK_CHARS]}"
+            for i, c in enumerate(context_chunks)
+        )
         answer = self._generate_answer(query, context, chunks)
         citations = [
             Citation(

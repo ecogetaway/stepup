@@ -33,8 +33,10 @@ def _call_ollama(prompt: str, system_prompt: str | None = None) -> str:
     if system_prompt:
         payload["system"] = system_prompt
 
+    timeout = httpx.Timeout(settings.LLM_TIMEOUT_SECONDS)
+
     try:
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=timeout) as client:
             response = client.post(
                 f"{settings.OLLAMA_BASE_URL}/api/generate",
                 json=payload,
@@ -76,8 +78,10 @@ def _call_openrouter(prompt: str, system_prompt: str | None = None) -> str:
         "X-Title": settings.APP_NAME,
     }
 
+    timeout = httpx.Timeout(settings.LLM_TIMEOUT_SECONDS)
+
     try:
-        with httpx.Client(timeout=180.0) as client:
+        with httpx.Client(timeout=timeout) as client:
             response = client.post(
                 f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions",
                 json=payload,
@@ -102,7 +106,12 @@ def _call_openrouter(prompt: str, system_prompt: str | None = None) -> str:
 
 
 def call_llm(prompt: str, system_prompt: str | None = None) -> str:
+    if settings.SKIP_LLM:
+        return _failure("LLM synthesis disabled (SKIP_LLM=true).")
+
     provider = settings.LLM_PROVIDER.strip().lower()
+    if provider in {"none", "retrieval"}:
+        return _failure("LLM synthesis disabled for retrieval-only mode.")
     if provider == "openrouter":
         return _call_openrouter(prompt, system_prompt=system_prompt)
     return _call_ollama(prompt, system_prompt=system_prompt)

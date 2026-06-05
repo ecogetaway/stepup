@@ -9,12 +9,12 @@ class HallucinationChecker:
             if not citations or not answer.strip():
                 return True, 0.0
 
-            answer_vec = embed_query(answer)
+            answer_vec = embed_query(answer[:400])
             if not answer_vec:
                 return True, 0.0
 
             similarities: list[float] = []
-            for citation in citations:
+            for citation in citations[:2]:
                 chunk_text = citation.chunk_text[:512].strip()
                 if not chunk_text:
                     continue
