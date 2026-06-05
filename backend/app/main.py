@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from contextlib import asynccontextmanager
 from time import perf_counter
 
@@ -88,7 +89,14 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "env": settings.APP_ENV}
+    deploy_commit = (
+        os.getenv("RAILWAY_GIT_COMMIT_SHA")
+        or os.getenv("RAILWAY_GIT_COMMIT")
+        or os.getenv("GIT_COMMIT_SHA")
+        or os.getenv("GIT_COMMIT")
+        or ""
+    )
+    return {"status": "ok", "env": settings.APP_ENV, "commit": deploy_commit[:12]}
 
 
 @app.post(f"{settings.API_V1_PREFIX}/query", response_model=QueryResponse)
