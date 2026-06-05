@@ -108,7 +108,7 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health() -> dict[str, str | bool]:
+def health() -> dict[str, str | bool | int]:
     deploy_commit = (
         os.getenv("RAILWAY_GIT_COMMIT_SHA")
         or os.getenv("RAILWAY_GIT_COMMIT")
@@ -121,7 +121,11 @@ def health() -> dict[str, str | bool]:
     if llm_provider == "ollama":
         llm_ready = bool(settings.OLLAMA_BASE_URL)
 
-    collection_count = _collection_count()
+    try:
+        collection_count = _collection_count()
+    except Exception:
+        logger.exception("Failed to read Chroma collection count for health check")
+        collection_count = None
 
     return {
         "status": "ok",
