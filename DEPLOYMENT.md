@@ -28,7 +28,7 @@ OPENROUTER_API_KEY=<your-openrouter-api-key>
 OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_HTTP_REFERER=https://<your-netlify-site>.netlify.app
-CONFIDENCE_ESCALATION_THRESHOLD=0.60
+CONFIDENCE_ESCALATION_THRESHOLD=0.65
 HALLUCINATION_SIMILARITY_THRESHOLD=0.35
 ```
 
@@ -48,9 +48,21 @@ Persistence strategy:
 After volumes are attached, run ingestion once from the backend service shell:
 
 ```bash
+python scripts/reingest_all.py
+```
+
+Or step by step:
+
+```bash
 python scripts/generate_sample_data.py
 python scripts/generate_tickets.py
 python scripts/ingest.py
+```
+
+If Chroma already has SOP/IT chunks but no tickets, restart the service (startup auto-ingests tickets) or run:
+
+```bash
+python -c "from ingestion.pipeline import ingest_tickets_only; ingest_tickets_only()"
 ```
 
 Verify:
@@ -58,6 +70,32 @@ Verify:
 ```bash
 curl https://<your-railway-backend-domain>/health
 ```
+
+Post-deploy smoke tests (replace `API` with your Railway URL):
+
+```bash
+API=https://<your-railway-backend-domain>
+
+curl -s "$API/health" | python3 -m json.tool
+
+curl -s -X POST "$API/api/v1/query" -H 'Content-Type: application/json' \
+  -d '{"query":"How do I deploy a Kafka consumer?","top_k":3}'
+
+curl -s -X POST "$API/api/v1/query" -H 'Content-Type: application/json' \
+  -d '{"query":"Summarize all P1 deployment tickets this month","top_k":5}'
+
+curl -s -X POST "$API/api/v1/query" -H 'Content-Type: application/json' \
+  -d '{"query":"What is the meaning of life?","top_k":3}'
+```
+
+Run evaluation against production:
+
+```bash
+cd backend
+python tests/run_ragas.py --api-url https://<your-railway-backend-domain>
+```
+
+Update the metrics table in [README.md](README.md) with the output.
 
 ## Netlify Frontend
 

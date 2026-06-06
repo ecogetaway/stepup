@@ -1,0 +1,485 @@
+{
+  "generated_at": "2026-06-06T07:31:46.480766+00:00",
+  "api_url": "http://localhost:8766",
+  "metrics": {
+    "baseline": {
+      "samples": 5,
+      "citation_rate": 1.0,
+      "avg_token_overlap": 0.46,
+      "avg_confidence": 0.901,
+      "escalation_rate": 0.0
+    }
+  },
+  "rows": [
+    {
+      "question": "How do I deploy a Kafka consumer?",
+      "category": "factual_sop",
+      "answer": "Here is the cited guidance for **How do I deploy a Kafka consumer?** based on indexed enterprise sources:\n\n1. Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. [1]\n2. Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming workloads. [2]\n3. Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. [3]\n\n**Sources:** TCK-20260633, kafka-deploy-sop.pdf",
+      "ground_truth": "Kafka consumer deployment follows the enterprise SOP with configuration, readiness checks, and rollout steps.",
+      "token_overlap": 0.714,
+      "has_citations": true,
+      "confidence": 0.9010906343895697,
+      "escalated": false,
+      "citation_count": 5,
+      "raw": {
+        "answer": "Here is the cited guidance for **How do I deploy a Kafka consumer?** based on indexed enterprise sources:\n\n1. Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. [1]\n2. Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming workloads. [2]\n3. Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. [3]\n\n**Sources:** TCK-20260633, kafka-deploy-sop.pdf",
+        "citations": [
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=2",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. - Configure bootstrap.servers, group.id, se",
+            "overlap_score": 0.994646097201131,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=1",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming worklo",
+            "overlap_score": 0.9959133821730449,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "TCK-20260633",
+            "source_url": "tickets/TCK-20260633",
+            "chunk_text": "Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. Service",
+            "overlap_score": 0.9713507552733535,
+            "doc_type": "ticket"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=3",
+            "chunk_text": "erve offsets, and escalate to the Kafka operations channel. Page 3",
+            "overlap_score": 0.9837760195071664,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "TCK-20260608",
+            "source_url": "tickets/TCK-20260608",
+            "chunk_text": "Ticket TCK-20260608 | P3 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-06-02T17:30:00 Kafka consumer rollout stuck after config map update. Routine",
+            "overlap_score": 0.9732757424378656,
+            "doc_type": "ticket"
+          }
+        ],
+        "confidence": 0.9010906343895697,
+        "escalated": false,
+        "agent_used": "react",
+        "trace": {
+          "steps": [
+            {
+              "step": "tool_call",
+              "tool": "document_search",
+              "query": "How do I deploy a Kafka consumer?",
+              "reused": true
+            },
+            {
+              "step": "context_built",
+              "chunks_used": 5
+            },
+            {
+              "step": "tool_call",
+              "tool": "summarizer",
+              "query": "How do I deploy a Kafka consumer?"
+            },
+            {
+              "step": "citations_attached",
+              "count": 5
+            }
+          ],
+          "routing": {
+            "forced_agent": null,
+            "selected_agent": "react"
+          },
+          "retrieval": {
+            "initial_chunks": 5,
+            "reranked_chunks": 5,
+            "top_k": 5,
+            "rerank_enabled": false
+          },
+          "guardrails": {
+            "hallucination_flag": false,
+            "coverage_score": 0.7319121993425692,
+            "confidence": 0.9010906343895697,
+            "escalated": false
+          }
+        },
+        "retrieval_ms": 123
+      }
+    },
+    {
+      "question": "What is the Kafka deployment procedure?",
+      "category": "factual_sop",
+      "answer": "Here is the cited guidance for **What is the Kafka deployment procedure?** based on indexed enterprise sources:\n\n1. Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming workloads. [1]\n2. erve offsets, and escalate to the Kafka operations channel. [2]\n3. Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. [3]\n\n**Sources:** TCK-20260633, kafka-deploy-sop.pdf",
+      "ground_truth": "The Kafka deploy SOP documents consumer configuration, broker connectivity, and validation steps.",
+      "token_overlap": 0.5,
+      "has_citations": true,
+      "confidence": 0.9203676307723376,
+      "escalated": false,
+      "citation_count": 5,
+      "raw": {
+        "answer": "Here is the cited guidance for **What is the Kafka deployment procedure?** based on indexed enterprise sources:\n\n1. Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming workloads. [1]\n2. erve offsets, and escalate to the Kafka operations channel. [2]\n3. Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. [3]\n\n**Sources:** TCK-20260633, kafka-deploy-sop.pdf",
+        "citations": [
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=1",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming worklo",
+            "overlap_score": 0.9985905933339612,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=3",
+            "chunk_text": "erve offsets, and escalate to the Kafka operations channel. Page 3",
+            "overlap_score": 0.9980323869680849,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "TCK-20260633",
+            "source_url": "tickets/TCK-20260633",
+            "chunk_text": "Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. Service",
+            "overlap_score": 0.9907849783183307,
+            "doc_type": "ticket"
+          },
+          {
+            "source_title": "TCK-20260608",
+            "source_url": "tickets/TCK-20260608",
+            "chunk_text": "Ticket TCK-20260608 | P3 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-06-02T17:30:00 Kafka consumer rollout stuck after config map update. Routine",
+            "overlap_score": 0.9916128196728495,
+            "doc_type": "ticket"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=3",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Monitoring and Rollback - Dashboards must show consumer lag, broker error rate, producer request latency, and failed deserializations. - Alert when consumer lag",
+            "overlap_score": 0.9866079616037906,
+            "doc_type": "sop"
+          }
+        ],
+        "confidence": 0.9203676307723376,
+        "escalated": false,
+        "agent_used": "react",
+        "trace": {
+          "steps": [
+            {
+              "step": "tool_call",
+              "tool": "document_search",
+              "query": "What is the Kafka deployment procedure?",
+              "reused": true
+            },
+            {
+              "step": "context_built",
+              "chunks_used": 5
+            },
+            {
+              "step": "tool_call",
+              "tool": "summarizer",
+              "query": "What is the Kafka deployment procedure?"
+            },
+            {
+              "step": "citations_attached",
+              "count": 5
+            }
+          ],
+          "routing": {
+            "forced_agent": null,
+            "selected_agent": "react"
+          },
+          "retrieval": {
+            "initial_chunks": 5,
+            "reranked_chunks": 5,
+            "top_k": 5,
+            "rerank_enabled": false
+          },
+          "guardrails": {
+            "hallucination_flag": false,
+            "coverage_score": 0.7772759132084397,
+            "confidence": 0.9203676307723376,
+            "escalated": false
+          }
+        },
+        "retrieval_ms": 328
+      }
+    },
+    {
+      "question": "How do I configure Kafka producers?",
+      "category": "factual_sop",
+      "answer": "Here is the cited guidance for **How do I configure Kafka producers?** based on indexed enterprise sources:\n\n1. Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming workloads. [1]\n2. erve offsets, and escalate to the Kafka operations channel. [2]\n3. Ticket TCK-20260608 | P3 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-06-02T17:30:00 Kafka consumer rollout stuck after config map update. [3]\n\n**Sources:** TCK-20260608, kafka-deploy-sop.pdf",
+      "ground_truth": "Producer retry policy and broker settings are defined in the Kafka deployment documentation.",
+      "token_overlap": 0.385,
+      "has_citations": true,
+      "confidence": 0.912424379906607,
+      "escalated": false,
+      "citation_count": 5,
+      "raw": {
+        "answer": "Here is the cited guidance for **How do I configure Kafka producers?** based on indexed enterprise sources:\n\n1. Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming workloads. [1]\n2. erve offsets, and escalate to the Kafka operations channel. [2]\n3. Ticket TCK-20260608 | P3 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-06-02T17:30:00 Kafka consumer rollout stuck after config map update. [3]\n\n**Sources:** TCK-20260608, kafka-deploy-sop.pdf",
+        "citations": [
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=1",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Kafka Consumer and Producer Deployment SOP Purpose and Scope - This SOP covers deployment of Kafka consumers and producers for enterprise event streaming worklo",
+            "overlap_score": 0.9795974389480085,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=3",
+            "chunk_text": "erve offsets, and escalate to the Kafka operations channel. Page 3",
+            "overlap_score": 0.9837760195071664,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "TCK-20260608",
+            "source_url": "tickets/TCK-20260608",
+            "chunk_text": "Ticket TCK-20260608 | P3 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-06-02T17:30:00 Kafka consumer rollout stuck after config map update. Routine",
+            "overlap_score": 0.9732757424378656,
+            "doc_type": "ticket"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=2",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. - Configure bootstrap.servers, group.id, se",
+            "overlap_score": 0.9686785167074553,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "TCK-20260633",
+            "source_url": "tickets/TCK-20260633",
+            "chunk_text": "Ticket TCK-20260633 | P2 | Deployment | Kafka consumer rollout stuck after config map update Status: Resolved Created: 2026-05-28T12:30:00 Kafka consumer rollout stuck after config map update. Service",
+            "overlap_score": 0.9713507552733535,
+            "doc_type": "ticket"
+          }
+        ],
+        "confidence": 0.912424379906607,
+        "escalated": false,
+        "agent_used": "react",
+        "trace": {
+          "steps": [
+            {
+              "step": "tool_call",
+              "tool": "document_search",
+              "query": "How do I configure Kafka producers?",
+              "reused": true
+            },
+            {
+              "step": "context_built",
+              "chunks_used": 5
+            },
+            {
+              "step": "tool_call",
+              "tool": "summarizer",
+              "query": "How do I configure Kafka producers?"
+            },
+            {
+              "step": "citations_attached",
+              "count": 5
+            }
+          ],
+          "routing": {
+            "forced_agent": null,
+            "selected_agent": "react"
+          },
+          "retrieval": {
+            "initial_chunks": 5,
+            "reranked_chunks": 5,
+            "top_k": 5,
+            "rerank_enabled": false
+          },
+          "guardrails": {
+            "hallucination_flag": false,
+            "coverage_score": 0.7739175803453379,
+            "confidence": 0.912424379906607,
+            "escalated": false
+          }
+        },
+        "retrieval_ms": 275
+      }
+    },
+    {
+      "question": "What are the Docker security runbook requirements?",
+      "category": "factual_sop",
+      "answer": "Here is the cited guidance for **What are the Docker security runbook requirements?** based on indexed enterprise sources:\n\n1. Docker and Container Security Runbook Objective - This runbook defines baseline security controls for container images and runtime deployment. [1]\n2. Runtime Security - Run containers as a non-root user and set readOnlyRootFilesystem=true wherever the application permits it. [2]\n3. - Select the least-privilege access group for the required environment: corporate, staging, production, or vendor. [3]\n\n**Sources:** docker-security-runbook.pdf, vpn-remote-access-sop.pdf",
+      "ground_truth": "Docker security runbook covers image scanning, non-root containers, secrets handling, and admission policies.",
+      "token_overlap": 0.5,
+      "has_citations": true,
+      "confidence": 0.9103577001530954,
+      "escalated": false,
+      "citation_count": 5,
+      "raw": {
+        "answer": "Here is the cited guidance for **What are the Docker security runbook requirements?** based on indexed enterprise sources:\n\n1. Docker and Container Security Runbook Objective - This runbook defines baseline security controls for container images and runtime deployment. [1]\n2. Runtime Security - Run containers as a non-root user and set readOnlyRootFilesystem=true wherever the application permits it. [2]\n3. - Select the least-privilege access group for the required environment: corporate, staging, production, or vendor. [3]\n\n**Sources:** docker-security-runbook.pdf, vpn-remote-access-sop.pdf",
+        "citations": [
+          {
+            "source_title": "docker-security-runbook.pdf",
+            "source_url": "docs/sops/docker-security-runbook.pdf#page=1",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Docker and Container Security Runbook Objective - This runbook defines baseline security controls for container images and runtime deployment. - It is mandatory",
+            "overlap_score": 0.9999955950089929,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "docker-security-runbook.pdf",
+            "source_url": "docs/sops/docker-security-runbook.pdf#page=2",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Runtime Security - Run containers as a non-root user and set readOnlyRootFilesystem=true wherever the application permits it. - Drop Linux capabilities by defau",
+            "overlap_score": 0.9815006227340951,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "vpn-remote-access-sop.pdf",
+            "source_url": "docs/sops/vpn-remote-access-sop.pdf#page=1",
+            "chunk_text": "l with business justification, manager approval, and expiry date. - Select the least-privilege access group for the required environment: corporate, staging, production, or vendor. - Production VPN ac",
+            "overlap_score": 0.9926620890416015,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "docker-security-runbook.pdf",
+            "source_url": "docs/sops/docker-security-runbook.pdf#page=3",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Incident Response - If a secret is found in an image, revoke the secret immediately and rotate all downstream credentials. - Quarantine the image tag, identify ",
+            "overlap_score": 0.9861091375197951,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "docker-security-runbook.pdf",
+            "source_url": "docs/sops/docker-security-runbook.pdf#page=2",
+            "chunk_text": "dental denial of service. Scanning and Remediation - Critical vulnerabilities must be remediated before production unless a time-bound exception is approved. - High vulnerabilities require a remediati",
+            "overlap_score": 0.9978398239722173,
+            "doc_type": "sop"
+          }
+        ],
+        "confidence": 0.9103577001530954,
+        "escalated": false,
+        "agent_used": "react",
+        "trace": {
+          "steps": [
+            {
+              "step": "tool_call",
+              "tool": "document_search",
+              "query": "What are the Docker security runbook requirements?",
+              "reused": true
+            },
+            {
+              "step": "context_built",
+              "chunks_used": 5
+            },
+            {
+              "step": "tool_call",
+              "tool": "summarizer",
+              "query": "What are the Docker security runbook requirements?"
+            },
+            {
+              "step": "citations_attached",
+              "count": 5
+            }
+          ],
+          "routing": {
+            "forced_agent": null,
+            "selected_agent": "react"
+          },
+          "retrieval": {
+            "initial_chunks": 5,
+            "reranked_chunks": 5,
+            "top_k": 5,
+            "rerank_enabled": false
+          },
+          "guardrails": {
+            "hallucination_flag": false,
+            "coverage_score": 0.7537235978527714,
+            "confidence": 0.9103577001530954,
+            "escalated": false
+          }
+        },
+        "retrieval_ms": 166
+      }
+    },
+    {
+      "question": "What Docker hardening steps are required?",
+      "category": "factual_sop",
+      "answer": "Here is the cited guidance for **What Docker hardening steps are required?** based on indexed enterprise sources:\n\n1. Docker and Container Security Runbook Objective - This runbook defines baseline security controls for container images and runtime deployment. [1]\n2. Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. [2]\n3. Producer Deployment Steps - Enable acks=all, retries=10, linger.ms=20, compression.type=zstd, and idempotence for critical producers. [3]\n\n**Sources:** docker-security-runbook.pdf, kafka-deploy-sop.pdf",
+      "ground_truth": "Runbook requires vulnerability scanning, least-privilege execution, and policy enforcement.",
+      "token_overlap": 0.2,
+      "has_citations": true,
+      "confidence": 0.8610308922471619,
+      "escalated": false,
+      "citation_count": 5,
+      "raw": {
+        "answer": "Here is the cited guidance for **What Docker hardening steps are required?** based on indexed enterprise sources:\n\n1. Docker and Container Security Runbook Objective - This runbook defines baseline security controls for container images and runtime deployment. [1]\n2. Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. [2]\n3. Producer Deployment Steps - Enable acks=all, retries=10, linger.ms=20, compression.type=zstd, and idempotence for critical producers. [3]\n\n**Sources:** docker-security-runbook.pdf, kafka-deploy-sop.pdf",
+        "citations": [
+          {
+            "source_title": "docker-security-runbook.pdf",
+            "source_url": "docs/sops/docker-security-runbook.pdf#page=1",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Docker and Container Security Runbook Objective - This runbook defines baseline security controls for container images and runtime deployment. - It is mandatory",
+            "overlap_score": 0.9621619809714798,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=2",
+            "chunk_text": "Enterprise Knowledge Copilot Sample SOP Consumer Deployment Steps - Package the consumer image with a pinned client library version and immutable image tag. - Configure bootstrap.servers, group.id, se",
+            "overlap_score": 0.9521576321620249,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "kafka-deploy-sop.pdf",
+            "source_url": "docs/sops/kafka-deploy-sop.pdf#page=2",
+            "chunk_text": " promoting to production. - Roll out production with maxUnavailable=0 and watch consumer lag, rebalance count, and processing latency. Producer Deployment Steps - Enable acks=all, retries=10, linger.m",
+            "overlap_score": 0.942535596572398,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "docker-security-runbook.pdf",
+            "source_url": "docs/sops/docker-security-runbook.pdf#page=2",
+            "chunk_text": "dental denial of service. Scanning and Remediation - Critical vulnerabilities must be remediated before production unless a time-bound exception is approved. - High vulnerabilities require a remediati",
+            "overlap_score": 0.9396008007687395,
+            "doc_type": "sop"
+          },
+          {
+            "source_title": "TCK-20260613",
+            "source_url": "tickets/TCK-20260613",
+            "chunk_text": "Ticket TCK-20260613 | P3 | Deployment | Container image rejected by vulnerability admission policy Status: Resolved Created: 2026-06-01T16:30:00 Container image rejected by vulnerability admission pol",
+            "overlap_score": 0.6000000000000001,
+            "doc_type": "ticket"
+          }
+        ],
+        "confidence": 0.8610308922471619,
+        "escalated": false,
+        "agent_used": "react",
+        "trace": {
+          "steps": [
+            {
+              "step": "tool_call",
+              "tool": "document_search",
+              "query": "What Docker hardening steps are required?",
+              "reused": true
+            },
+            {
+              "step": "context_built",
+              "chunks_used": 5
+            },
+            {
+              "step": "tool_call",
+              "tool": "summarizer",
+              "query": "What Docker hardening steps are required?"
+            },
+            {
+              "step": "citations_attached",
+              "count": 5
+            }
+          ],
+          "routing": {
+            "forced_agent": null,
+            "selected_agent": "react"
+          },
+          "retrieval": {
+            "initial_chunks": 5,
+            "reranked_chunks": 5,
+            "top_k": 5,
+            "rerank_enabled": false
+          },
+          "guardrails": {
+            "hallucination_flag": false,
+            "coverage_score": 0.6574767551039283,
+            "confidence": 0.8610308922471619,
+            "escalated": false
+          }
+        },
+        "retrieval_ms": 51
+      }
+    }
+  ]
+}

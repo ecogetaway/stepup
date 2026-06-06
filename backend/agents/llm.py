@@ -55,6 +55,49 @@ def _call_ollama(prompt: str, system_prompt: str | None = None) -> str:
         )
 
 
+def _call_openai(prompt: str, system_prompt: str | None = None) -> str:
+    if not HAS_HTTPX:
+        return _failure("httpx not installed. Install it to enable live LLM calls.")
+    if not settings.OPENAI_API_KEY:
+        return _failure("OPENAI_API_KEY is not set.")
+
+    messages: list[dict[str, str]] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+
+    payload = {
+        "model": settings.OPENAI_MODEL,
+        "messages": messages,
+        "temperature": 0.2,
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    timeout = httpx.Timeout(settings.LLM_TIMEOUT_SECONDS)
+
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(
+                "https://api.openai.com/v1/chat/completions",
+                json=payload,
+                headers=headers,
+            )
+            response.raise_for_status()
+            data = response.json()
+            answer = (data["choices"][0]["message"].get("content") or "").strip()
+            if not answer:
+                return _failure("Empty response from OpenAI.")
+            return answer
+    except Exception as exc:
+        logger.warning("OpenAI call failed: %s", exc)
+        return _failure(
+            f"OpenAI unreachable for model {settings.OPENAI_MODEL}. Error: {exc}"
+        )
+
+
 def _call_openrouter(prompt: str, system_prompt: str | None = None) -> str:
     if not HAS_HTTPX:
         return _failure("httpx not installed. Install it to enable live LLM calls.")
@@ -112,6 +155,8 @@ def call_llm(prompt: str, system_prompt: str | None = None) -> str:
     provider = settings.LLM_PROVIDER.strip().lower()
     if provider in {"none", "retrieval"}:
         return _failure("LLM synthesis disabled for retrieval-only mode.")
+    if provider == "openai":
+        return _call_openai(prompt, system_prompt=system_prompt)
     if provider == "openrouter":
         return _call_openrouter(prompt, system_prompt=system_prompt)
     return _call_ollama(prompt, system_prompt=system_prompt)

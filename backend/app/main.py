@@ -116,8 +116,12 @@ def health() -> dict[str, str | bool | int]:
         or ""
     )
     llm_provider = settings.LLM_PROVIDER.strip().lower()
-    llm_ready = llm_provider == "openrouter" and bool(settings.OPENROUTER_API_KEY)
-    if llm_provider == "ollama":
+    llm_ready = False
+    if llm_provider == "openrouter":
+        llm_ready = bool(settings.OPENROUTER_API_KEY)
+    elif llm_provider == "openai":
+        llm_ready = bool(settings.OPENAI_API_KEY)
+    elif llm_provider == "ollama":
         llm_ready = bool(settings.OLLAMA_BASE_URL)
 
     try:
@@ -200,6 +204,7 @@ def query(request: QueryRequest) -> QueryResponse:
                 "initial_chunks": len(chunks),
                 "reranked_chunks": len(reranked_chunks),
                 "top_k": request.top_k,
+                "rerank_enabled": settings.USE_CROSS_ENCODER_RERANK,
             },
             "guardrails": {
                 "hallucination_flag": hallucination_flag,

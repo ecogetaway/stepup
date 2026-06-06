@@ -2,6 +2,7 @@ const suggestions = [
   "How do I deploy a Kafka consumer?",
   "What are the Docker security runbook requirements?",
   "What is the VPN setup procedure?",
+  "Summarize all P1 deployment tickets this month",
 ];
 
 interface SuggestionChipsProps {

@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
 
-    CONFIDENCE_ESCALATION_THRESHOLD: float = 0.60
+    CONFIDENCE_ESCALATION_THRESHOLD: float = 0.65
     HALLUCINATION_SIMILARITY_THRESHOLD: float = 0.35
 
     DATA_DIR: Path = Path("./data")

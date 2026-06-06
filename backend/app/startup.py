@@ -58,7 +58,21 @@ def ensure_demo_data_ready() -> None:
         return
 
     if doc_count > 0:
-        logger.info("Chroma collection ready with %s documents", doc_count)
+        from ingestion.pipeline import count_ticket_chunks, ingest_tickets_only
+
+        ticket_count = count_ticket_chunks()
+        if ticket_count == 0 and settings.TICKET_CSV.exists():
+            logger.info(
+                "Chroma has %s documents but no ticket chunks; ingesting tickets",
+                doc_count,
+            )
+            ingest_tickets_only()
+        else:
+            logger.info(
+                "Chroma collection ready with %s documents (%s ticket chunks)",
+                doc_count,
+                ticket_count,
+            )
         return
 
     logger.info("Chroma collection empty; running ingestion")

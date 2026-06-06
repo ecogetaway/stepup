@@ -1,7 +1,7 @@
 import logging
 import re
 
-from agents.llm import LLM_FAILURE_PREFIX, call_llm
+from agents.tools import DocumentSearchTool, SummarizerTool
 from app.schemas import DocumentChunk, Citation
 from retrieval.hybrid_retriever import HybridRetriever
 from retrieval.scoring import chunk_overlap_score
@@ -9,7 +9,6 @@ from retrieval.scoring import chunk_overlap_score
 logger = logging.getLogger(__name__)
 
 MAX_CONTEXT_CHUNKS = 3
-MAX_CHUNK_CHARS = 700
 
 
 def _strip_demo_boilerplate(text: str) -> str:
@@ -52,36 +51,41 @@ def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) ->
         "",
     ]
 
-    for index, chunk in enumerate(chunks[:3]):
+    for index, chunk in enumerate(chunks[:MAX_CONTEXT_CHUNKS]):
         excerpt = _summarize_chunk_excerpt(chunk.text)
         if not excerpt:
             continue
         lines.append(f"{index + 1}. {excerpt} [{index + 1}]")
 
-    sources = sorted({chunk.metadata.get("source", "unknown") for chunk in chunks[:3]})
+    sources = sorted({chunk.metadata.get("source", "unknown") for chunk in chunks[:MAX_CONTEXT_CHUNKS]})
     lines.extend(["", f"**Sources:** {', '.join(sources)}"])
     return "\n".join(lines)
 
 
 class ReActAgent:
     def __init__(self, retriever: HybridRetriever) -> None:
-        self.retriever = retriever
+        self.document_search = DocumentSearchTool(retriever)
+        self.summarizer = SummarizerTool()
         self._trace: list[dict] = []
 
     def run(self, query: str, chunks: list[DocumentChunk] | None = None) -> dict:
         self._trace = []
         if chunks is None:
-            self._trace.append({"step": "retrieve", "tool": "hybrid_retriever"})
-            chunks = self.retriever.retrieve(query)
+            self._trace.append(
+                {"step": "tool_call", "tool": "document_search", "query": query}
+            )
+            chunks = self.document_search.run(query)
         else:
-            self._trace.append({"step": "retrieve", "tool": "hybrid_retriever", "reused": True})
+            self._trace.append(
+                {"step": "tool_call", "tool": "document_search", "query": query, "reused": True}
+            )
+
         self._trace.append({"step": "context_built", "chunks_used": len(chunks)})
-        context_chunks = chunks[:MAX_CONTEXT_CHUNKS]
-        context = "\n\n".join(
-            f"[{i + 1}] {c.text[:MAX_CHUNK_CHARS]}"
-            for i, c in enumerate(context_chunks)
-        )
-        answer, retrieval_only = self._generate_answer(query, context, chunks)
+        self._trace.append({"step": "tool_call", "tool": "summarizer", "query": query})
+        answer, retrieval_only = self.summarizer.run(query, chunks)
+        if retrieval_only:
+            answer = _build_retrieval_fallback_answer(query, chunks)
+
         citations = [
             Citation(
                 source_title=c.metadata.get("source", "unknown"),
@@ -100,18 +104,3 @@ class ReActAgent:
             "retrieval_only": retrieval_only,
             "trace": {"steps": self._trace},
         }
-
-    def _generate_answer(
-        self, query: str, context: str, chunks: list[DocumentChunk]
-    ) -> tuple[str, bool]:
-        system_prompt = (
-            "You are an enterprise knowledge assistant. Answer ONLY using the provided context. "
-            "Cite sources inline using [N] where N is the 1-based index of the context passage. "
-            "If the context does not contain enough information, say so explicitly and suggest escalating to a human agent. "
-            "Do not invent facts, URLs, or ticket IDs."
-        )
-        prompt = f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer (cite with [N]):"
-        answer = call_llm(prompt, system_prompt=system_prompt)
-        if answer.startswith(LLM_FAILURE_PREFIX):
-            return _build_retrieval_fallback_answer(query, chunks), True
-        return answer, False
