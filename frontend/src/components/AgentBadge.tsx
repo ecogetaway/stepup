@@ -11,7 +11,7 @@ const formatAgentLabel = (agent: string) => {
 };
 
 export const AgentBadge = ({ agent }: AgentBadgeProps) => (
-  <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">
+  <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100">
     {formatAgentLabel(agent)}
   </span>
 );
