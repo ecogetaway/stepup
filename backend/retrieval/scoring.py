@@ -14,7 +14,7 @@ def normalise_overlap_score(score: float | None) -> float:
 
 
 def chunk_overlap_score(chunk: DocumentChunk, rank: int) -> float:
-    if chunk.rerank_score is not None:
+    if chunk.rerank_score is not None and chunk.rerank_score > 0:
         return normalise_overlap_score(chunk.rerank_score)
     if chunk.bm25_score is not None and chunk.bm25_score > 0:
         return normalise_overlap_score(chunk.bm25_score)

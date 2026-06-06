@@ -46,18 +46,30 @@ def _build_retrieval_fallback_answer(query: str, chunks: list[DocumentChunk]) ->
             "Please escalate to a human support agent."
         )
 
+    from agents.tools import is_ticket_query
+
+    scoped_chunks = chunks
+    if is_ticket_query(query):
+        ticket_chunks = [
+            chunk for chunk in chunks if chunk.metadata.get("doc_type") == "ticket"
+        ]
+        if ticket_chunks:
+            scoped_chunks = ticket_chunks
+
     lines = [
         f"Here is the cited guidance for **{query}** based on indexed enterprise sources:",
         "",
     ]
 
-    for index, chunk in enumerate(chunks[:MAX_CONTEXT_CHUNKS]):
+    for index, chunk in enumerate(scoped_chunks[:MAX_CONTEXT_CHUNKS]):
         excerpt = _summarize_chunk_excerpt(chunk.text)
         if not excerpt:
             continue
         lines.append(f"{index + 1}. {excerpt} [{index + 1}]")
 
-    sources = sorted({chunk.metadata.get("source", "unknown") for chunk in chunks[:MAX_CONTEXT_CHUNKS]})
+    sources = sorted(
+        {chunk.metadata.get("source", "unknown") for chunk in scoped_chunks[:MAX_CONTEXT_CHUNKS]}
+    )
     lines.extend(["", f"**Sources:** {', '.join(sources)}"])
     return "\n".join(lines)
 

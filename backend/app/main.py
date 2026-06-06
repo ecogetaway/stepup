@@ -191,6 +191,20 @@ def query(request: QueryRequest) -> QueryResponse:
         if retrieval_only and guardrail_citations:
             confidence = max(confidence, 0.82)
             hallucination_flag = False
+
+        ticket_citations = [
+            citation
+            for citation in guardrail_citations
+            if citation.doc_type == "ticket"
+        ]
+        query_lower = request.query.lower()
+        if ticket_citations and any(
+            keyword in query_lower
+            for keyword in ("ticket", "tickets", "incident", "p1", "p2", "p3")
+        ):
+            confidence = max(confidence, 0.78)
+            hallucination_flag = False
+
         escalated = app.state.confidence_scorer.should_escalate(confidence)
         retrieval_ms = int((perf_counter() - started_at) * 1000)
 

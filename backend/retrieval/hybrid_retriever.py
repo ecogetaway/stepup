@@ -32,12 +32,17 @@ class VectorRetriever:
         )
         self.collection = self.client.get_collection(settings.CHROMA_COLLECTION)
 
-    def search(self, query: str, top_k: int) -> list[DocumentChunk]:
+    def search(
+        self, query: str, top_k: int, where: dict | None = None
+    ) -> list[DocumentChunk]:
         q_vec = embed_query(query)
-        results = self.collection.query(
-            query_embeddings=[q_vec],
-            n_results=top_k,
-        )
+        query_kwargs: dict = {
+            "query_embeddings": [q_vec],
+            "n_results": top_k,
+        }
+        if where:
+            query_kwargs["where"] = where
+        results = self.collection.query(**query_kwargs)
         chunks: list[DocumentChunk] = []
         for i in range(len(results["ids"][0])):
             chunks.append(
@@ -154,3 +159,23 @@ class HybridRetriever:
         fused = _reciprocal_rank_fusion([v_results, b_results], k=settings.RRF_K)
         top = [c for c, _ in fused[: settings.RERANKER_TOP_K]]
         return top
+
+    def retrieve_tickets(
+        self, query: str, priority: str | None = None
+    ) -> list[DocumentChunk]:
+        where: dict = {"doc_type": "ticket"}
+        if priority:
+            where = {"$and": [{"doc_type": "ticket"}, {"priority": priority}]}
+
+        ticket_query = f"support ticket incident {query}"
+        v_results = self.vector.search(
+            ticket_query, settings.VECTOR_TOP_K, where=where
+        )
+        b_results = [
+            chunk
+            for chunk in self.bm25.search(ticket_query, settings.BM25_TOP_K)
+            if chunk.metadata.get("doc_type") == "ticket"
+            and (not priority or chunk.metadata.get("priority") == priority)
+        ]
+        fused = _reciprocal_rank_fusion([v_results, b_results], k=settings.RRF_K)
+        return [chunk for chunk, _ in fused[: settings.RERANKER_TOP_K]]
