@@ -75,16 +75,43 @@ def build_description(priority: str, category: str, subject: str, index: int) ->
     return f"{subject}. {impact} {evidence}"
 
 
+def created_at_for_ticket(index: int, priority: str, now: datetime) -> datetime:
+    """Spread timestamps so open P1 tickets show ok / at-risk / breached at demo time."""
+    if priority == "P1":
+        p1_offsets = {
+            4: timedelta(hours=1),    # ok — 25% of 4h SLA
+            11: timedelta(hours=3, minutes=30),  # at_risk — ~87.5%
+            18: timedelta(hours=5),   # breached (resolved in CSV)
+            27: timedelta(hours=3, minutes=45),  # critical
+            36: timedelta(hours=4, minutes=15),  # breached
+            44: timedelta(hours=2, minutes=30),  # at_risk
+        }
+        return now - p1_offsets.get(index, timedelta(hours=2))
+
+    if priority == "P2":
+        return now - timedelta(hours=4 + (index % 5))
+
+    return now - timedelta(hours=8 + (index % 12))
+
+
+def status_for_ticket(index: int, priority: str) -> str:
+    if index == 18:
+        return "Resolved"
+    if priority == "P1" and index in {4, 11, 27, 36, 44}:
+        return "Open" if index in {11, 27, 36, 44} else "In Progress"
+    return STATUSES[(index + len(priority)) % len(STATUSES)]
+
+
 def generate_rows() -> list[dict[str, str]]:
-    now = datetime(2026, 6, 4, 9, 30)
+    now = datetime(2026, 6, 9, 10, 0)
     rows: list[dict[str, str]] = []
 
     for index in range(1, 51):
         category = CATEGORIES[(index - 1) % len(CATEGORIES)]
         subject = TICKET_TEMPLATES[category][(index - 1) // len(CATEGORIES) % 5]
         priority = priority_for_ticket(index)
-        status = STATUSES[(index + len(category)) % len(STATUSES)]
-        created_at = now - timedelta(hours=index * 5)
+        status = status_for_ticket(index, priority)
+        created_at = created_at_for_ticket(index, priority, now)
 
         rows.append(
             {

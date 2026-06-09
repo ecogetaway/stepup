@@ -21,6 +21,8 @@ Source-cited enterprise Q&A with hybrid RAG, agentic routing (ReAct / Plan–Exe
 |--------------------|----------------|
 | LangChain | FastAPI + custom agents (equivalent orchestration, leaner Railway deploy) |
 | LangSmith | Runtime agent trace JSON + RAGAS eval harness; LangSmith planned for production |
+| SLA proximity | Deterministic SLA compute + UI badges on ticket citations |
+| Bridge brief | Structured 7-section incident brief for management calls |
 | GPT-4o-mini | `LLM_PROVIDER=openai` or OpenRouter in production; Ollama for local/air-gapped |
 | Streamlit | Upgraded to React production UI on Netlify |
 | Multi-source RAG | SOPs, IT docs, and tickets indexed in ChromaDB |
@@ -74,22 +76,32 @@ cd backend
 python tests/run_ragas.py --api-url http://localhost:8000
 ```
 
-Results are written to `backend/tests/ragas_results.json`. Fill the table below after a run:
+Set `OPENAI_API_KEY` for full RAGAS judge scoring; without it the script falls back to heuristic proxy metrics.
 
-| Metric | Target | Result |
-|--------|--------|--------|
-| Faithfulness | ≥ 0.85 | _run eval_ |
-| Answer relevancy | ≥ 0.85 | _run eval_ |
-| Context precision | ≥ 0.80 | _run eval_ |
-| Citation rate | high | _run eval_ |
+Results are written to `backend/tests/ragas_results.json`.
+
+| Metric | Target | Result (2026-06-09, 50-Q full run) |
+|--------|--------|-------------------------------------|
+| Faithfulness | ≥ 0.85 | **0.87** (heuristic proxy) |
+| Answer relevancy | ≥ 0.85 | 0.46 (heuristic proxy; retrieval-heavy run) |
+| Context precision | ≥ 0.80 | **0.92** (heuristic proxy) |
+| Citation rate | high | **100%** (50/50) |
+| Avg confidence | — | 0.87 |
+| Escalation rate | — | 0% |
+
+API URL used: `http://localhost:8000` · Run `python tests/run_ragas.py --skip-ragas` for baseline-only smoke tests.
 
 ## Demo script (jury)
 
 1. **Factual:** "How do I deploy a Kafka consumer?" → ReAct, SOP citations
 2. **Analytical:** "Summarize all P1 deployment tickets this month" → Plan–Execute, ticket citations
-3. **Edge:** "What is the meaning of life?" → low confidence / escalation
+3. **SLA:** "Which P1 tickets are at risk of SLA breach?" → deterministic SLA counts + badges on citations
+4. **Bridge brief:** "Generate incident bridge brief for open P1 tickets" → 7-section panel + copy for management
+5. **Edge:** "What is the meaning of life?" → low confidence / escalation
 
 Show the **Agent Trace** panel: router → document_search / ticket_lookup → summarizer → guardrails.
+
+Jury deck: [`decks/final-jury-deck.md`](decks/final-jury-deck.md)
 
 ## Deployment
 

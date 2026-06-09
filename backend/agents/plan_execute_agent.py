@@ -1,15 +1,16 @@
 import logging
 
 from agents.react_agent import _build_retrieval_fallback_answer
+from agents.sla_analytics import aggregate, format_sla_context, is_sla_query
 from agents.tools import (
     DocumentSearchTool,
     SummarizerTool,
     TicketLookupTool,
     is_ticket_query,
 )
-from app.schemas import Citation, DocumentChunk
+from app.schemas import DocumentChunk
 from retrieval.hybrid_retriever import HybridRetriever
-from retrieval.scoring import chunk_overlap_score
+from services.citations import build_citation_from_chunk
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class PlanExecuteAgent:
 
     def run(self, query: str) -> dict:
         self._trace = []
+        sla_summary = None
         ticket_focused = is_ticket_query(query)
         sub_queries = self._decompose(query)
         self._trace.append({"step": "plan", "sub_queries": sub_queries})
@@ -72,24 +74,32 @@ class PlanExecuteAgent:
 
         all_chunks = _order_chunks_for_query(query, list(chunk_lookup.values()))
         self._trace.append({"step": "aggregated", "total_chunks": len(all_chunks)})
+
+        if is_sla_query(query):
+            sla_summary = aggregate(query)
+            self._trace.append(
+                {"step": "tool_call", "tool": "sla_analytics", "summary": sla_summary}
+            )
+
         self._trace.append({"step": "tool_call", "tool": "summarizer", "query": query})
 
+        summarizer_query = query
+        if sla_summary is not None:
+            summarizer_query = (
+                f"{query}\n\n{format_sla_context(sla_summary)}\n"
+                "Use the deterministic SLA counts above in your answer."
+            )
+
         answer, retrieval_only = self.summarizer.run(
-            query, all_chunks, ticket_first=ticket_focused
+            summarizer_query, all_chunks, ticket_first=ticket_focused
         )
         if retrieval_only:
             answer = _build_retrieval_fallback_answer(query, all_chunks)
 
         citation_chunks = all_chunks[:MAX_CITATIONS]
         citations = [
-            Citation(
-                source_title=c.metadata.get("source", "unknown"),
-                source_url=c.metadata.get("source_url", ""),
-                chunk_text=c.text[:200],
-                overlap_score=chunk_overlap_score(c, rank),
-                doc_type=c.metadata.get("doc_type", "unknown"),
-            )
-            for rank, c in enumerate(citation_chunks)
+            build_citation_from_chunk(chunk, rank)
+            for rank, chunk in enumerate(citation_chunks)
         ]
 
         return {
@@ -97,6 +107,7 @@ class PlanExecuteAgent:
             "citations": citations,
             "agent_used": "plan_execute",
             "retrieval_only": retrieval_only,
+            "sla_summary": sla_summary,
             "trace": {"plan": sub_queries, "steps": self._trace},
         }
 

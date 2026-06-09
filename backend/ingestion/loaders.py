@@ -1,7 +1,9 @@
 import csv
 from pathlib import Path
 from typing import Iterator
+
 from app.schemas import DocumentChunk
+from services.sla import compute_sla_state, sla_to_metadata
 
 try:
     import pypdf  # type: ignore
@@ -57,13 +59,9 @@ def load_tickets_csv(path: Path) -> Iterator[tuple[str, dict]]:
             if not ticket_id or not subject:
                 continue
 
-            text = (
-                f"Ticket {ticket_id} | {priority} | {category} | {subject}\n"
-                f"Status: {status}\n"
-                f"Created: {created_at}\n"
-                f"{description}"
-            )
-            yield text, {
+            sla = compute_sla_state(created_at, priority, status)
+            sla_line = ""
+            metadata: dict = {
                 "source": ticket_id,
                 "source_url": f"tickets/{ticket_id}",
                 "doc_type": "ticket",
@@ -72,3 +70,18 @@ def load_tickets_csv(path: Path) -> Iterator[tuple[str, dict]]:
                 "status": status,
                 "created_at": created_at,
             }
+            if sla is not None:
+                metadata.update(sla_to_metadata(sla))
+                sla_line = (
+                    f"SLA: {sla.state} | due {sla.sla_due_at.isoformat(timespec='seconds')} | "
+                    f"{sla.remaining_minutes} min remaining | {sla.elapsed_pct}% elapsed\n"
+                )
+
+            text = (
+                f"Ticket {ticket_id} | {priority} | {category} | {subject}\n"
+                f"Status: {status}\n"
+                f"Created: {created_at}\n"
+                f"{sla_line}"
+                f"{description}"
+            )
+            yield text, metadata

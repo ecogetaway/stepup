@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Citation } from "../types/api";
+import { SlaBadge } from "./SlaBadge";
 
 interface CitationListProps {
   citations: Citation[];
@@ -93,6 +94,7 @@ export const CitationList = ({ citations }: CitationListProps) => {
                 <span className="text-xs font-medium text-slate-500">
                   {citation.overlap_score.toFixed(2)}
                 </span>
+                {citation.sla ? <SlaBadge sla={citation.sla} /> : null}
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 {truncateText(citation.chunk_text)}

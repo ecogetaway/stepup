@@ -1,5 +1,6 @@
 import type { QueryResponse } from "../types/api";
 import { AnswerMarkdown } from "./AnswerMarkdown";
+import { BridgeBriefPanel } from "./BridgeBriefPanel";
 import { CitationList } from "./CitationList";
 import { EscalationBanner } from "./EscalationBanner";
 import { MetricsRow } from "./MetricsRow";
@@ -52,6 +53,8 @@ export const AnswerPanel = ({ response, isLoading }: AnswerPanelProps) => {
 
   return (
     <div className="space-y-6">
+      {response.bridge_brief ? <BridgeBriefPanel brief={response.bridge_brief} /> : null}
+
       <section className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Answer</h2>
         <div className="mt-4">

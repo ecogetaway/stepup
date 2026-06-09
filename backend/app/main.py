@@ -6,12 +6,13 @@ import os
 from contextlib import asynccontextmanager
 from time import perf_counter
 
+from agents.bridge_brief import BridgeBriefTool
 from agents.plan_execute_agent import PlanExecuteAgent
 from agents.react_agent import ReActAgent
 from agents.router import QueryRouter
 from app.config import settings
 from app.startup import _collection_count, ensure_demo_data_ready
-from app.schemas import AgentType, Citation, QueryRequest, QueryResponse
+from app.schemas import AgentType, OutputMode, QueryRequest, QueryResponse
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from guardrails.confidence import ConfidenceScorer
@@ -19,26 +20,13 @@ from guardrails.escalation import EscalationEngine
 from guardrails.hallucination_check import HallucinationChecker
 from retrieval.hybrid_retriever import HybridRetriever
 from retrieval.reranker import Reranker
-from retrieval.scoring import chunk_overlap_score
+from services.citations import build_citation_from_chunk
 
 logger = logging.getLogger(__name__)
 
 
-def _build_citations(chunks) -> list[Citation]:
-    citations: list[Citation] = []
-
-    for rank, chunk in enumerate(chunks):
-        citations.append(
-            Citation(
-                source_title=chunk.metadata.get("source", "unknown"),
-                source_url=chunk.metadata.get("source_url", ""),
-                chunk_text=chunk.text[:200],
-                overlap_score=chunk_overlap_score(chunk, rank),
-                doc_type=chunk.metadata.get("doc_type", "unknown"),
-            )
-        )
-
-    return citations
+def _build_citations(chunks) -> list:
+    return [build_citation_from_chunk(chunk, rank) for rank, chunk in enumerate(chunks)]
 
 
 def _warmup_retrieval_models(retriever: HybridRetriever, reranker: Reranker) -> None:
@@ -62,6 +50,7 @@ def _bootstrap_app_state(app: FastAPI) -> None:
     app.state.router = QueryRouter()
     app.state.react_agent = ReActAgent(retriever)
     app.state.plan_execute_agent = PlanExecuteAgent(retriever)
+    app.state.bridge_brief_tool = BridgeBriefTool(retriever)
     app.state.hallucination_checker = HallucinationChecker()
     app.state.confidence_scorer = ConfidenceScorer()
     app.state.escalation_engine = EscalationEngine()
@@ -155,13 +144,63 @@ def query(request: QueryRequest) -> QueryResponse:
 
     started_at = perf_counter()
     forced_agent = request.force_agent
-    agent_type = (
-        forced_agent
-        if forced_agent is not None and forced_agent != AgentType.AUTO
-        else app.state.router.route(request.query)
+    use_bridge_brief = (
+        request.output_mode == OutputMode.BRIDGE_BRIEF
+        or app.state.router.is_bridge_brief(request.query)
     )
 
     try:
+        if use_bridge_brief:
+            agent_result = app.state.bridge_brief_tool.run(request.query)
+            guardrail_citations = agent_result.get("citations") or []
+            answer = agent_result["answer"]
+            hallucination_flag, coverage_score = app.state.hallucination_checker.check(
+                answer,
+                guardrail_citations,
+            )
+            confidence = app.state.confidence_scorer.score(
+                guardrail_citations,
+                hallucination_flag=hallucination_flag,
+                coverage_score=coverage_score,
+            )
+            if guardrail_citations:
+                confidence = max(confidence, 0.8)
+                hallucination_flag = False
+
+            escalated = app.state.confidence_scorer.should_escalate(confidence)
+            retrieval_ms = int((perf_counter() - started_at) * 1000)
+            trace = {
+                **agent_result.get("trace", {}),
+                "routing": {
+                    "forced_agent": forced_agent.value if forced_agent else None,
+                    "selected_agent": "bridge_brief",
+                    "output_mode": "bridge_brief",
+                },
+                "guardrails": {
+                    "hallucination_flag": hallucination_flag,
+                    "coverage_score": coverage_score,
+                    "confidence": confidence,
+                    "escalated": escalated,
+                },
+            }
+            response = QueryResponse(
+                answer=answer,
+                citations=guardrail_citations,
+                confidence=confidence,
+                escalated=escalated,
+                agent_used=agent_result.get("agent_used", "bridge_brief"),
+                trace=trace,
+                retrieval_ms=retrieval_ms,
+                bridge_brief=agent_result.get("bridge_brief"),
+            )
+            return app.state.escalation_engine.apply(response)
+
+        agent_type = (
+            forced_agent
+            if forced_agent is not None and forced_agent != AgentType.AUTO
+            else app.state.router.route(request.query)
+        )
+
         chunks = app.state.retriever.retrieve(request.query)
         if settings.USE_CROSS_ENCODER_RERANK:
             reranked_chunks = app.state.reranker.rerank(
@@ -236,6 +275,7 @@ def query(request: QueryRequest) -> QueryResponse:
             agent_used=agent_result.get("agent_used", agent_type.value),
             trace=trace,
             retrieval_ms=retrieval_ms,
+            sla_summary=agent_result.get("sla_summary"),
         )
         return app.state.escalation_engine.apply(response)
     except ZeroDivisionError as exc:

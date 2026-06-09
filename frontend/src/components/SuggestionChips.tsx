@@ -3,6 +3,8 @@ const suggestions = [
   "What are the Docker security runbook requirements?",
   "What is the VPN setup procedure?",
   "Summarize all P1 deployment tickets this month",
+  "Which P1 tickets are at risk of SLA breach?",
+  "Generate incident bridge brief for open P1 tickets",
 ];
 
 interface SuggestionChipsProps {
