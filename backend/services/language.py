@@ -10,14 +10,14 @@ SUPPORTED_LANGUAGES = {"hi": "Hindi"}
 
 
 def detect_language(text: str) -> str:
-    """Return 'hi' if the text is mostly Devanagari script, else 'en'."""
+    """Return 'hi' if the text contains meaningful Devanagari script, else 'en'."""
     if not text:
         return "en"
     letters = [ch for ch in text if ch.isalpha()]
     if not letters:
         return "en"
     devanagari = sum(1 for ch in letters if "\u0900" <= ch <= "\u097f")
-    return "hi" if devanagari / len(letters) >= 0.25 else "en"
+    return "hi" if devanagari / len(letters) >= 0.10 else "en"
 
 
 def _translate(text: str, instruction: str) -> str | None:
