@@ -38,6 +38,7 @@ class Citation(BaseModel):
     overlap_score: float = Field(ge=0.0, le=1.0)
     doc_type: str
     sla: SlaStatus | None = None
+    full_text: str = ""
 
 
 class BridgeBriefSection(BaseModel):
@@ -68,6 +69,8 @@ class QueryResponse(BaseModel):
     retrieval_ms: int
     sla_summary: dict | None = None
     bridge_brief: IncidentBridgeBrief | None = None
+    out_of_scope: bool = False
+    blocked: bool = False
 
 
 class DocumentChunk(BaseModel):
