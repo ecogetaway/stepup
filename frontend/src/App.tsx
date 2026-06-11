@@ -49,6 +49,7 @@ const App = () => {
 
   const handleSuggestionSelect = (suggestion: string) => {
     setQueryText(suggestion);
+    void submitQuery(suggestion, topK, agentMode);
   };
 
   return (
