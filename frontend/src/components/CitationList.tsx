@@ -41,8 +41,69 @@ const truncateText = (text: string, maxLength = 180) => {
   return `${text.slice(0, maxLength).trim()}...`;
 };
 
+const SourceViewer = ({
+  citation,
+  onClose,
+}: {
+  citation: Citation;
+  onClose: () => void;
+}) => {
+  const typeStyles = getDocTypeStyles(citation.doc_type);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Source: ${citation.source_title}`}
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-semibold text-slate-900">
+                {citation.source_title}
+              </h3>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ${typeStyles.badge}`}
+              >
+                {typeStyles.label}
+              </span>
+              {citation.sla ? <SlaBadge sla={citation.sla} /> : null}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Relevance score: {citation.overlap_score.toFixed(2)}
+              {citation.source_url ? ` · ${citation.source_url}` : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            onClick={onClose}
+          >
+            Close ✕
+          </button>
+        </header>
+        <div className="overflow-y-auto p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Indexed source passage (verbatim)
+          </p>
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+            {citation.full_text || citation.chunk_text}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const CitationList = ({ citations }: CitationListProps) => {
   const [showAll, setShowAll] = useState(false);
+  const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
 
   if (citations.length === 0) {
     return (
@@ -55,10 +116,6 @@ export const CitationList = ({ citations }: CitationListProps) => {
 
   const visibleCitations = showAll ? citations : citations.slice(0, VISIBLE_LIMIT);
   const hiddenCount = citations.length - VISIBLE_LIMIT;
-
-  const handleToggle = () => {
-    setShowAll((current) => !current);
-  };
 
   return (
     <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -73,9 +130,11 @@ export const CitationList = ({ citations }: CitationListProps) => {
         {visibleCitations.map((citation, index) => {
           const typeStyles = getDocTypeStyles(citation.doc_type);
           return (
-            <article
+            <button
               key={`${citation.source_title}-${citation.source_url}-${index}`}
-              className={`rounded-lg border border-slate-100 bg-slate-50/80 p-4 ${typeStyles.border}`}
+              type="button"
+              className={`block w-full rounded-lg border border-slate-100 bg-slate-50/80 p-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${typeStyles.border}`}
+              onClick={() => setSelectedCitation(citation)}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span
@@ -95,14 +154,14 @@ export const CitationList = ({ citations }: CitationListProps) => {
                   {citation.overlap_score.toFixed(2)}
                 </span>
                 {citation.sla ? <SlaBadge sla={citation.sla} /> : null}
+                <span className="ml-auto text-xs font-semibold text-indigo-600">
+                  View source →
+                </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 {truncateText(citation.chunk_text)}
               </p>
-              {citation.source_url ? (
-                <p className="mt-2 truncate text-xs text-slate-400">{citation.source_url}</p>
-              ) : null}
-            </article>
+            </button>
           );
         })}
       </div>
@@ -112,10 +171,17 @@ export const CitationList = ({ citations }: CitationListProps) => {
           type="button"
           className="mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           aria-expanded={showAll}
-          onClick={handleToggle}
+          onClick={() => setShowAll((current) => !current)}
         >
           {showAll ? "Show fewer citations" : `Show ${hiddenCount} more citations`}
         </button>
+      ) : null}
+
+      {selectedCitation ? (
+        <SourceViewer
+          citation={selectedCitation}
+          onClose={() => setSelectedCitation(null)}
+        />
       ) : null}
     </section>
   );
