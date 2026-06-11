@@ -7,7 +7,7 @@ paginate: true
 # Enterprise Knowledge Copilot
 ## Agentic RAG for Enterprise Knowledge
 
-**Team Vipers** · NASSCOM AI-Code-Sarathi · Final Jury 2026
+**Team Vipers** · NASSCOM AI-Code-Sarathi · Finale 2026
 
 *Speaker notes: Open with the problem — scattered docs and duplicate tickets slow every incident response.*
 
@@ -136,7 +136,7 @@ User → React UI → FastAPI → Router → Agent (ReAct / Plan–Execute / Bri
 ## Thank You
 
 **Team Vipers**  
-NASSCOM AI-Code-Sarathi · Final Jury 2026
+NASSCOM AI-Code-Sarathi · Finale 2026
 
 Repo: [github.com/ecogetaway/stepup](https://github.com/ecogetaway/stepup)
 
