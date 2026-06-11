@@ -18,9 +18,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from guardrails.confidence import ConfidenceScorer
 from guardrails.escalation import EscalationEngine
 from guardrails.hallucination_check import HallucinationChecker
+from guardrails.relevance_gate import is_blocked_query, query_relevance
 from retrieval.hybrid_retriever import HybridRetriever
 from retrieval.reranker import Reranker
 from services.citations import build_citation_from_chunk
+from services.language import detect_language, translate_from_english, translate_to_english
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +144,13 @@ def query(request: QueryRequest) -> QueryResponse:
             detail = "Backend is not ready. Run ingestion first."
         raise HTTPException(status_code=503, detail=detail)
 
+    original_query = request.query
+    query_lang = detect_language(original_query)
+    if query_lang != "en":
+        translated_query = translate_to_english(original_query)
+        if translated_query:
+            request.query = translated_query
+
     started_at = perf_counter()
     forced_agent = request.force_agent
     use_bridge_brief = (
@@ -210,6 +219,47 @@ def query(request: QueryRequest) -> QueryResponse:
             reranked_chunks = chunks[: request.top_k]
         citations = _build_citations(reranked_chunks)
 
+        blocked = is_blocked_query(request.query)
+        relevance = 0.0 if blocked else query_relevance(request.query, reranked_chunks)
+        if blocked or relevance < settings.RELEVANCE_GATE_THRESHOLD:
+            retrieval_ms = int((perf_counter() - started_at) * 1000)
+            if blocked:
+                gate_answer = (
+                    "This request appears to ask for restricted or sensitive "
+                    "information, so I won't answer it. The query has been logged "
+                    "and routed to the security team."
+                )
+            else:
+                gate_answer = (
+                    "I couldn't find anything sufficiently relevant in the knowledge "
+                    "base (SOPs, IT docs, and support tickets) to answer this "
+                    "reliably, so I'm escalating it to a human agent instead of "
+                    "guessing. It has also been logged as a potential knowledge gap."
+                )
+            return QueryResponse(
+                answer=gate_answer,
+                citations=[],
+                confidence=0.0 if blocked else round(max(relevance, 0.0), 2),
+                escalated=True,
+                agent_used="guardrails",
+                trace={
+                    "steps": [{"step": "relevance_gate"}],
+                    "routing": {
+                        "forced_agent": forced_agent.value if forced_agent else None,
+                        "selected_agent": "guardrails",
+                    },
+                    "guardrails": {
+                        "blocked": blocked,
+                        "relevance": round(relevance, 3),
+                        "threshold": settings.RELEVANCE_GATE_THRESHOLD,
+                        "escalated": True,
+                    },
+                },
+                retrieval_ms=retrieval_ms,
+                out_of_scope=not blocked,
+                blocked=blocked,
+            )
+
         if agent_type == AgentType.PLAN_EXECUTE:
             agent_result = app.state.plan_execute_agent.run(request.query)
         else:
@@ -277,6 +327,15 @@ def query(request: QueryRequest) -> QueryResponse:
             retrieval_ms=retrieval_ms,
             sla_summary=agent_result.get("sla_summary"),
         )
+        if query_lang != "en":
+            response.trace["multilingual"] = {
+                "detected_language": query_lang,
+                "original_query": original_query,
+                "english_query": request.query,
+            }
+            translated_answer = translate_from_english(response.answer, query_lang)
+            if translated_answer:
+                response.answer = translated_answer
         return app.state.escalation_engine.apply(response)
     except ZeroDivisionError as exc:
         logger.exception("Query pipeline failed with division by zero")
