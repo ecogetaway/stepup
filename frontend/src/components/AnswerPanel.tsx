@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { QueryResponse } from "../types/api";
 import { AnswerMarkdown } from "./AnswerMarkdown";
 import { BridgeBriefPanel } from "./BridgeBriefPanel";
@@ -11,13 +12,35 @@ interface AnswerPanelProps {
   isLoading: boolean;
 }
 
-const LoadingSkeleton = () => (
+const LOADING_STAGES = [
+  "Routing query to the right agent…",
+  "Retrieving sources from SOPs, docs, and tickets…",
+  "Checking relevance and safety guardrails…",
+  "Reading the top-ranked passages…",
+  "Writing a cited answer…",
+  "Verifying citations and confidence…",
+];
+
+const LoadingSkeleton = () => {
+  const [stageIndex, setStageIndex] = useState(0);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setStageIndex((current) =>
+        current < LOADING_STAGES.length - 1 ? current + 1 : current,
+      );
+    }, 1800);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  return (
   <div
     className="space-y-4 rounded-xl border border-slate-100 bg-white p-6 shadow-sm"
     aria-label="Loading answer"
   >
-    <p className="text-sm text-slate-600">
-      Routing query → retrieving sources → synthesizing cited answer…
+    <p className="text-sm text-slate-600" aria-live="polite">
+      <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-indigo-500 align-middle" />
+      {LOADING_STAGES[stageIndex]}
     </p>
     <div className="h-5 w-48 animate-pulse rounded bg-slate-200" />
     <div className="space-y-3">
@@ -31,7 +54,8 @@ const LoadingSkeleton = () => (
       <div className="h-20 animate-pulse rounded-xl bg-slate-100" />
     </div>
   </div>
-);
+  );
+};
 
 export const AnswerPanel = ({ response, isLoading }: AnswerPanelProps) => {
   if (isLoading) return <LoadingSkeleton />;
