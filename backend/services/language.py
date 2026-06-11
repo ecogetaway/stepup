@@ -43,7 +43,10 @@ def translate_from_english(text: str, lang: str) -> str | None:
         return None
     return _translate(
         text,
-        f"Translate the following answer into {language_name}. Keep technical "
-        "terms, command names, and file names in English. Preserve markdown "
-        "formatting. Return ONLY the translation, nothing else.",
+        f"Translate the following answer into {language_name} as used by Indian "
+        "IT professionals: keep common technical English words (deploy, consumer, "
+        "producer, staging, production, rollout, config, image, tag) in English "
+        "rather than translating them. Keep command names, file names, code, and "
+        "citation markers like [1] in English. Preserve markdown formatting. "
+        "Return ONLY the translation, nothing else.",
     )
