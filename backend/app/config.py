@@ -36,6 +36,7 @@ class Settings(BaseSettings):
 
     CONFIDENCE_ESCALATION_THRESHOLD: float = 0.65
     HALLUCINATION_SIMILARITY_THRESHOLD: float = 0.35
+    RELEVANCE_GATE_THRESHOLD: float = 0.30
 
     DATA_DIR: Path = Path("./data")
     SOP_DIR: Path = Path("./data/sops")
