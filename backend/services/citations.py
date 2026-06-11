@@ -33,6 +33,7 @@ def build_citation_from_chunk(chunk, rank: int) -> Citation:
         source_title=metadata.get("source", "unknown"),
         source_url=metadata.get("source_url", ""),
         chunk_text=chunk.text[:200],
+        full_text=chunk.text[:4000],
         overlap_score=chunk_overlap_score(chunk, rank),
         doc_type=metadata.get("doc_type", "unknown"),
         sla=sla_from_metadata(metadata),
