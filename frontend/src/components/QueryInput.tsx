@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from "react";
+import { useEffect } from "react";
 
 interface QueryInputProps {
   queryText: string;
@@ -20,12 +20,19 @@ export const QueryInput = ({
     onSubmit();
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-      event.preventDefault();
-      handleSubmit();
-    }
-  };
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        if (!isSubmitDisabled) {
+          onSubmit();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isSubmitDisabled, onSubmit]);
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -37,7 +44,6 @@ export const QueryInput = ({
           value={queryText}
           aria-label="Enterprise knowledge query"
           onChange={(event) => onChange(event.target.value)}
-          onKeyDown={handleKeyDown}
         />
       </label>
 
