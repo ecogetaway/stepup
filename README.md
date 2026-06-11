@@ -91,7 +91,7 @@ Results are written to `backend/tests/ragas_results.json`.
 
 API URL used: `http://localhost:8000` · Run `python tests/run_ragas.py --skip-ragas` for baseline-only smoke tests.
 
-## Demo script (jury)
+## Demo script 
 
 1. **Factual:** "How do I deploy a Kafka consumer?" → ReAct, SOP citations
 2. **Analytical:** "Summarize all P1 deployment tickets this month" → Plan–Execute, ticket citations
@@ -101,7 +101,7 @@ API URL used: `http://localhost:8000` · Run `python tests/run_ragas.py --skip-r
 
 Show the **Agent Trace** panel: router → document_search / ticket_lookup → summarizer → guardrails.
 
-Jury deck: [`decks/final-jury-deck.md`](decks/final-jury-deck.md)
+Jury deck: Presentation deck: [`decks/final-deck.md`](decks/final-deck.md)
 
 ## Deployment
 
