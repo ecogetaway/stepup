@@ -68,7 +68,7 @@ export const AnswerPanel = ({ response, isLoading }: AnswerPanelProps) => {
         latencyMs={response.retrieval_ms}
       />
 
-      <EscalationBanner isEscalated={response.escalated} />
+      <EscalationBanner response={response} />
       <CitationList citations={response.citations} />
       <TraceViewer trace={response.trace} />
     </div>
