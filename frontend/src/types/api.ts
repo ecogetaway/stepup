@@ -12,6 +12,7 @@ export interface Citation {
   overlap_score: number;
   doc_type: string;
   sla?: SlaStatus | null;
+  full_text?: string;
 }
 
 export interface BridgeBriefSection {
@@ -50,6 +51,8 @@ export interface QueryResponse {
   generation_ms?: number;
   sla_summary?: Record<string, any> | null;
   bridge_brief?: IncidentBridgeBrief | null;
+  out_of_scope?: boolean;
+  blocked?: boolean;
 }
 
 export type AgentMode = "auto" | "react" | "plan_execute";
