@@ -80,16 +80,16 @@ Set `OPENAI_API_KEY` for full RAGAS judge scoring; without it the script falls b
 
 Results are written to `backend/tests/ragas_results.json`.
 
-| Metric | Target | Result (2026-06-09, 50-Q full run) |
-|--------|--------|-------------------------------------|
-| Faithfulness | ≥ 0.85 | **0.87** (heuristic proxy) |
-| Answer relevancy | ≥ 0.85 | 0.46 (heuristic proxy; retrieval-heavy run) |
-| Context precision | ≥ 0.80 | **0.92** (heuristic proxy) |
-| Citation rate | high | **100%** (50/50) |
-| Avg confidence | — | 0.87 |
-| Escalation rate | — | 0% |
+| Metric | Target | Result (2026-06-11, 50-Q full run, production) |
+|--------|--------|------------------------------------------------|
+| Citation rate (in-scope) | 100% | **100%** (45/45) |
+| Citation rate (out-of-scope) | 0% by design | **0%** — refusals attach no citations |
+| Edge-case escalation | 100% | **100%** (was 0% before the relevance gate) |
+| Avg confidence (in-scope) | — | 0.82 |
+| Avg confidence (edge) | honest low | **0.08** (was a false 0.82) |
+| In-scope escalation | low | 6.7% (3/45 low-confidence answers flagged for human review) |
 
-API URL used: `http://localhost:8000` · Run `python tests/run_ragas.py --skip-ragas` for baseline-only smoke tests.
+API URL used: `https://stepup-production-7453.up.railway.app` · Run `python tests/run_ragas.py --skip-ragas` for baseline-only smoke tests.
 
 ## Demo script 
 
