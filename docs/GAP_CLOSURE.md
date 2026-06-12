@@ -19,7 +19,7 @@
 | Analytical demo chips | Closed | SLA + bridge brief suggestions in `SuggestionChips.tsx` |
 | Step-by-step agent trace | Closed | `TraceViewer.tsx` step list + JSON |
 | Reingest script for Railway | Closed | `scripts/reingest_all.py` |
-| Jury deck | Closed | `decks/final-deck.md` |
+| Presentation deck | Closed | `decks/final-deck.md` |
 | LangChain / LangSmith | Documented | README architecture table; custom FastAPI equivalent |
 | Streamlit UI | Documented | React + Vite production UI |
 
