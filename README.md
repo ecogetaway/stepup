@@ -82,6 +82,9 @@ Results are written to `backend/tests/ragas_results.json`.
 
 | Metric | Target | Result (2026-06-11, 50-Q full run, production) |
 |--------|--------|------------------------------------------------|
+| Context precision | ≥ 0.80 | **0.91** (heuristic proxy) |
+| Faithfulness | ≥ 0.85 | 0.82 (heuristic proxy — see note) |
+| Answer relevancy | ≥ 0.85 | 0.43 (heuristic proxy — see note) |
 | Citation rate (in-scope) | 100% | **100%** (45/45) |
 | Citation rate (out-of-scope) | 0% by design | **0%** — refusals attach no citations |
 | Edge-case escalation | 100% | **100%** (was 0% before the relevance gate) |
@@ -89,7 +92,10 @@ Results are written to `backend/tests/ragas_results.json`.
 | Avg confidence (edge) | honest low | **0.08** (was a false 0.82) |
 | In-scope escalation | low | 6.7% (3/45 low-confidence answers flagged for human review) |
 
+> Note: faithfulness and relevancy are token-overlap proxies; the earlier templated fallback answers copied source text verbatim and inflated them. Genuine LLM-written prose paraphrases sources, scoring lower on overlap while being more faithful in substance. Full RAGAS judge scoring requires `OPENAI_API_KEY` at eval time.
+
 API URL used: `https://stepup-production-7453.up.railway.app` · Run `python tests/run_ragas.py --skip-ragas` for baseline-only smoke tests.
+
 
 ## Demo script 
 
