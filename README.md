@@ -107,7 +107,7 @@ API URL used: `https://stepup-production-7453.up.railway.app` · Run `python tes
 
 Show the **Agent Trace** panel: router → document_search / ticket_lookup → summarizer → guardrails.
 
-Jury deck: Presentation deck: [`decks/final-deck.md`](decks/final-deck.md)
+Presentation deck: [`decks/final-deck.md`](decks/final-deck.md)
 
 ## Deployment
 
