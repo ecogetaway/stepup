@@ -12,6 +12,7 @@ class AgentType(str, Enum):
 class OutputMode(str, Enum):
     DEFAULT = "default"
     BRIDGE_BRIEF = "bridge_brief"
+    ONBOARDING_BRIEF = "onboarding_brief"
 
 
 class QueryRequest(BaseModel):
@@ -59,6 +60,17 @@ class IncidentBridgeBrief(BaseModel):
     next_update: str
 
 
+class OnboardingBrief(BaseModel):
+    role_focus: str
+    welcome_summary: str
+    key_systems: BridgeBriefSection
+    common_issues: BridgeBriefSection
+    tools_and_access: BridgeBriefSection
+    who_to_ask: BridgeBriefSection
+    first_week_checklist: BridgeBriefSection
+    additional_resources: str
+
+
 class QueryResponse(BaseModel):
     answer: str
     citations: list[Citation]
@@ -69,8 +81,10 @@ class QueryResponse(BaseModel):
     retrieval_ms: int
     sla_summary: dict | None = None
     bridge_brief: IncidentBridgeBrief | None = None
+    onboarding_brief: OnboardingBrief | None = None
     out_of_scope: bool = False
     blocked: bool = False
+    similar_incidents: list[list[str]] = []
 
 
 class DocumentChunk(BaseModel):
