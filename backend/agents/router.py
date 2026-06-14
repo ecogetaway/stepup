@@ -32,10 +32,28 @@ class QueryRouter:
             "leadership update",
         }
     )
+    ONBOARDING_KEYWORDS = frozenset(
+        {
+            "onboarding",
+            "onboard",
+            "ramp up",
+            "ramp-up",
+            "new hire",
+            "new to the team",
+            "first week",
+            "joining the team",
+            "new engineer",
+            "getting started",
+        }
+    )
 
     def is_bridge_brief(self, query: str) -> bool:
         q = query.lower()
         return any(keyword in q for keyword in self.BRIDGE_BRIEF_KEYWORDS)
+
+    def is_onboarding_brief(self, query: str) -> bool:
+        q = query.lower()
+        return any(keyword in q for keyword in self.ONBOARDING_KEYWORDS)
 
     def route(self, query: str) -> AgentType:
         q = query.lower()
