@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from time import perf_counter
 
 from agents.bridge_brief import BridgeBriefTool
+from agents.onboarding_brief import OnboardingBriefTool
 from agents.plan_execute_agent import PlanExecuteAgent
 from agents.react_agent import ReActAgent
 from agents.router import QueryRouter
@@ -16,6 +17,7 @@ from app.schemas import AgentType, OutputMode, QueryRequest, QueryResponse
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from guardrails.confidence import ConfidenceScorer
+from guardrails.duplicate_detection import find_duplicate_incidents
 from guardrails.escalation import EscalationEngine
 from guardrails.hallucination_check import HallucinationChecker
 from guardrails.relevance_gate import is_blocked_query, query_relevance
@@ -53,6 +55,7 @@ def _bootstrap_app_state(app: FastAPI) -> None:
     app.state.react_agent = ReActAgent(retriever)
     app.state.plan_execute_agent = PlanExecuteAgent(retriever)
     app.state.bridge_brief_tool = BridgeBriefTool(retriever)
+    app.state.onboarding_brief_tool = OnboardingBriefTool(retriever)
     app.state.hallucination_checker = HallucinationChecker()
     app.state.confidence_scorer = ConfidenceScorer()
     app.state.escalation_engine = EscalationEngine()
@@ -157,6 +160,10 @@ def query(request: QueryRequest) -> QueryResponse:
         request.output_mode == OutputMode.BRIDGE_BRIEF
         or app.state.router.is_bridge_brief(request.query)
     )
+    use_onboarding_brief = (
+        request.output_mode == OutputMode.ONBOARDING_BRIEF
+        or app.state.router.is_onboarding_brief(request.query)
+    )
 
     try:
         if use_bridge_brief:
@@ -201,6 +208,51 @@ def query(request: QueryRequest) -> QueryResponse:
                 trace=trace,
                 retrieval_ms=retrieval_ms,
                 bridge_brief=agent_result.get("bridge_brief"),
+            )
+            return app.state.escalation_engine.apply(response)
+
+        if use_onboarding_brief:
+            agent_result = app.state.onboarding_brief_tool.run(request.query)
+            guardrail_citations = agent_result.get("citations") or []
+            answer = agent_result["answer"]
+            hallucination_flag, coverage_score = app.state.hallucination_checker.check(
+                answer,
+                guardrail_citations,
+            )
+            confidence = app.state.confidence_scorer.score(
+                guardrail_citations,
+                hallucination_flag=hallucination_flag,
+                coverage_score=coverage_score,
+            )
+            if guardrail_citations:
+                confidence = max(confidence, 0.8)
+                hallucination_flag = False
+
+            escalated = app.state.confidence_scorer.should_escalate(confidence)
+            retrieval_ms = int((perf_counter() - started_at) * 1000)
+            trace = {
+                **agent_result.get("trace", {}),
+                "routing": {
+                    "forced_agent": forced_agent.value if forced_agent else None,
+                    "selected_agent": "onboarding_brief",
+                    "output_mode": "onboarding_brief",
+                },
+                "guardrails": {
+                    "hallucination_flag": hallucination_flag,
+                    "coverage_score": coverage_score,
+                    "confidence": confidence,
+                    "escalated": escalated,
+                },
+            }
+            response = QueryResponse(
+                answer=answer,
+                citations=guardrail_citations,
+                confidence=confidence,
+                escalated=escalated,
+                agent_used=agent_result.get("agent_used", "onboarding_brief"),
+                trace=trace,
+                retrieval_ms=retrieval_ms,
+                onboarding_brief=agent_result.get("onboarding_brief"),
             )
             return app.state.escalation_engine.apply(response)
 
@@ -326,6 +378,9 @@ def query(request: QueryRequest) -> QueryResponse:
             trace=trace,
             retrieval_ms=retrieval_ms,
             sla_summary=agent_result.get("sla_summary"),
+            similar_incidents=find_duplicate_incidents(
+                guardrail_citations, threshold=settings.DUPLICATE_SIMILARITY_THRESHOLD
+            ),
         )
         if query_lang != "en":
             response.trace["multilingual"] = {
