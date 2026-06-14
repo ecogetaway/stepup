@@ -6,6 +6,7 @@ const suggestions = [
   "Summarize all P1 deployment tickets this month",
   "Which P1 tickets are at risk of SLA breach?",
   "Generate incident bridge brief for open P1 tickets",
+  "Generate an onboarding brief for a new Application Support engineer",
 ];
 
 interface SuggestionChipsProps {
