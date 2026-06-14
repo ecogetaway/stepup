@@ -33,6 +33,17 @@ export interface IncidentBridgeBrief {
   next_update: string;
 }
 
+export interface OnboardingBrief {
+  role_focus: string;
+  welcome_summary: string;
+  key_systems: BridgeBriefSection;
+  common_issues: BridgeBriefSection;
+  tools_and_access: BridgeBriefSection;
+  who_to_ask: BridgeBriefSection;
+  first_week_checklist: BridgeBriefSection;
+  additional_resources: string;
+}
+
 export interface QueryRequest {
   query: string;
   top_k?: number;
@@ -51,8 +62,10 @@ export interface QueryResponse {
   generation_ms?: number;
   sla_summary?: Record<string, any> | null;
   bridge_brief?: IncidentBridgeBrief | null;
+  onboarding_brief?: OnboardingBrief | null;
   out_of_scope?: boolean;
   blocked?: boolean;
+  similar_incidents?: string[][];
 }
 
 export type AgentMode = "auto" | "react" | "plan_execute";
